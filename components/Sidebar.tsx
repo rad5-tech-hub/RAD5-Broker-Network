@@ -64,7 +64,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
         } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col items-center p-4 ">
-          <Image src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
+          <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
           <Link
             href="/user-dashboard/profile"
             className="mt-3 border-b dark:border-gray-700 w-full flex justify-center pb-4"

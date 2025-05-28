@@ -62,7 +62,7 @@ export default function AdminSidebar({
         } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col items-center p-4 border-b dark:border-gray-700">
-          <Image src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
+          <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
 
           <Link href="/admin/settings" className="mt-2">
             <Avatar className="h-12 w-12">
