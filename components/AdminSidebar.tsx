@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -62,7 +62,7 @@ export default function AdminSidebar({
         } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col items-center p-4 border-b dark:border-gray-700">
-          <img src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
+          <Image src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
 
           <Link href="/admin/settings" className="mt-2">
             <Avatar className="h-12 w-12">

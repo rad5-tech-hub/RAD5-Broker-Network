@@ -7,7 +7,7 @@ import { Copy, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ReferralLinkSection() {
-  const [referralLink] = useState("https://learnhub.com/ref/abc123");
+  const [referralLink] = useState("https://rad5brokersnetwork.com/ref/abc123");
 
   const copyToClipboard = async () => {
     try {
@@ -15,7 +15,7 @@ export default function ReferralLinkSection() {
       toast.success("Copied!", {
         description: "Referral link copied to clipboard.",
       });
-    } catch (err) {
+    } catch {
       toast.error("Error", {
         description: "Failed to copy referral link.",
       });
@@ -33,7 +33,7 @@ export default function ReferralLinkSection() {
         toast.success("Shared!", {
           description: "Referral link shared successfully.",
         });
-      } catch (err) {
+      } catch {
         toast.error("Error", {
           description: "Failed to share referral link.",
         });

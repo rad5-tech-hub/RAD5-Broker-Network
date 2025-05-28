@@ -8,13 +8,12 @@ import {
   CardHeader,
   CardContent,
   CardFooter,
-  Card,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Eye, EyeOff } from "lucide-react";
-
+import Image from "next/image";
 export function SignupForm() {
   const [profileImage, setProfileImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -78,7 +77,7 @@ export function SignupForm() {
             <div className="absolute top-0 w-full h-full bg-linear-to-r from-blue-900/40 to-blue-800/60"></div>
             <div className="absolute z-50 text-[22px] text-white p-6">
               <Link href="/">
-                <img src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
+                <Image src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
               </Link>{" "}
               <h1 className="font-bold">Welcome to RBN</h1>
               <p>
@@ -90,7 +89,7 @@ export function SignupForm() {
           <div className="bg-white lg:px-4 lg:py-12 py-4 px-2">
             <CardHeader className="space-y-1">
               <Link href="/">
-                <img
+                <Image
                   src="/rad5hub.png"
                   alt="RAD5_Logo"
                   className="w-30 lg:hidden"

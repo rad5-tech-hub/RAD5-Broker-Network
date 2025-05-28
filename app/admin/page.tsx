@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Users, CreditCard, DollarSign } from "lucide-react";
+import { Users, CreditCard } from "lucide-react";
 
 export default function AdminDashboard() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);

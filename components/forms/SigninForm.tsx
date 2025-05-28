@@ -8,12 +8,11 @@ import {
   CardHeader,
   CardContent,
   CardFooter,
-  Card,
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff } from "lucide-react";
-
+import Image from "next/image";
 export function SigninForm() {
   const [formData, setFormData] = useState({
     email: "",
@@ -43,7 +42,7 @@ export function SigninForm() {
             <div className="absolute top-0 w-full h-full bg-linear-to-r from-blue-900/40 to-blue-800/60"></div>
             <div className="absolute z-50 text-[22px] text-white p-8">
               <Link href="/">
-                <img src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
+                <Image src="/rad5hub.png" alt="RAD5_Logo" className="w-30" />
               </Link>
               <h1 className="font-bold">Welcome to RBN</h1>
               <p>
@@ -55,7 +54,7 @@ export function SigninForm() {
           <div className="bg-white lg:px-4 lg:py-20 py-6 px-2 flex flex-col justify-center">
             <CardHeader className="space-y-1">
               <Link href="/">
-                <img
+                <Image
                   src="/rad5hub.png"
                   alt="RAD5_Logo"
                   className="w-30 lg:hidden"
@@ -116,7 +115,7 @@ export function SigninForm() {
                 Sign In
               </button>
               <div className="w-full mt-4 text-center text-sm flex justify-center items-center">
-                Don't have an account?
+                Don&apos;t have an account?
                 <Link href="/signup" className="underline ml-2 cursor-pointer">
                   Sign Up
                 </Link>
