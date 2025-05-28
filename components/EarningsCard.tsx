@@ -21,14 +21,14 @@ export default function EarningsCard() {
       <CardContent>
         <div className="mb-4">
           <h3 className="text-lg font-semibold">
-            Total Earnings: ${earnings.total}
+            Total Earnings: ₦{earnings.total}
           </h3>
         </div>
         <div className="space-y-2">
           {earnings.byCourse.map((item, index) => (
             <div key={index} className="flex justify-between">
               <span>{item.course}</span>
-              <span>${item.amount}</span>
+              <span>₦{item.amount}</span>
             </div>
           ))}
         </div>

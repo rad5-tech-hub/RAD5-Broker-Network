@@ -59,7 +59,7 @@ export default function WithdrawalForm() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="amount">Amount ($)</Label>
+              <Label htmlFor="amount">Amount (₦)</Label>
               <Input
                 id="amount"
                 type="number"
@@ -89,7 +89,7 @@ export default function WithdrawalForm() {
             <DialogTitle>Confirm Withdrawal</DialogTitle>
           </DialogHeader>
           <p>
-            Are you sure you want to request a withdrawal of $
+            Are you sure you want to request a withdrawal of ₦
             {parseFloat(amount).toFixed(2)} to {accountDetails}?
           </p>
           <DialogFooter>

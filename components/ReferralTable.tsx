@@ -48,7 +48,7 @@ export default function ReferralsTable() {
               <TableHead>Name</TableHead>
               <TableHead>Course</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Commission ($)</TableHead>
+              <TableHead>Commission (₦)</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
