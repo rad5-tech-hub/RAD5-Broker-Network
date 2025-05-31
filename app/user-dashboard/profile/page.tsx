@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { RiMenu2Line } from "react-icons/ri";
 
 export default function ProfilePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,7 +55,7 @@ export default function ProfilePage() {
           className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"
           onClick={() => setIsSidebarOpen(true)}
         >
-          Open Sidebar
+          <RiMenu2Line className="h-6 w-6" />
         </button>
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
           Profile

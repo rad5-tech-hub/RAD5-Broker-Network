@@ -33,14 +33,14 @@ export function SigninForm() {
   };
 
   return (
-    <div className="w-screen min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900">
       <form
         className="container px-4 sm:px-6 lg:px-16 mx-auto h-fit"
         onSubmit={handleSubmit}
       >
         <div className="grid lg:grid-cols-2 grid-cols-1 min-h-[500px] rounded-lg overflow-hidden shadow-xl">
           <div className="hidden lg:block bg-[url(/signupbg03.jpg)] bg-cover bg-center bg-no-repeat relative">
-            <div className="absolute top-0 w-full h-full bg-gradient-to-r from-blue-800/40 to-blue-900/60"></div>
+            <div className="absolute top-0 w-full h-full bg-gradient-to-r from-blue-800/45 to-blue-900/60"></div>
             <div className="absolute z-10 text-white p-6 space-y-0">
               <Link href="/" aria-label="RAD5 Brokers Network Home">
                 <Image
@@ -50,14 +50,14 @@ export function SigninForm() {
                   height="100"
                 />
               </Link>
-              <h1 className="text-2xl font-bold">Welcome to RBN</h1>
-              <p className="text-sm max-w-xs">
+              <h1 className="text-4xl font-bold">Welcome to RBN</h1>
+              <p className="text-lg ">
                 Sign in to access your RBN ambassador dashboard and start
                 earning commissions.
               </p>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 lg:px-6 lg:py-12 py-6 px-4 flex flex-col justify-center">
+          <div className="bg-white dark:bg-gray-800 lg:px-6 lg:py-8 py-4 px-4 flex flex-col justify-center">
             <CardHeader className="space-y-2">
               <Link
                 href="/"

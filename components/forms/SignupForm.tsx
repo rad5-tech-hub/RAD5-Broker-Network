@@ -68,14 +68,14 @@ export function SignupForm() {
   };
 
   return (
-    <div className="w-screen min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+    <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900">
       <form
         className="container px-4 sm:px-6 lg:px-8 mx-auto h-fit"
         onSubmit={handleSubmit}
       >
         <div className="grid lg:grid-cols-2 grid-cols-1 min-h-[600px] rounded-lg overflow-hidden shadow-xl">
           <div className="hidden lg:block bg-[url(/signupbg03.jpg)] bg-cover bg-center bg-no-repeat relative">
-            <div className="absolute top-0 w-full h-full bg-gradient-to-r from-blue-900/40 to-blue-800/60"></div>
+            <div className="absolute top-0 w-full h-full bg-gradient-to-r from-blue-900/45 to-blue-800/60"></div>
             <div className="absolute z-10 text-white p-6 space-y-4">
               <Link href="/" aria-label="RAD5 Brokers Network Home">
                 <Image
@@ -85,14 +85,14 @@ export function SignupForm() {
                   height={100}
                 />
               </Link>
-              <h1 className="text-2xl font-bold">Welcome to RBN</h1>
+              <h1 className="text-4xl font-bold">Welcome to RBN</h1>
               <p className="text-sm max-w-xs">
                 Join RAD5 Brokers Network to refer students to elite tech
                 programs and earn commissions.
               </p>
             </div>
           </div>
-          <div className="bg-white dark:bg-gray-800 lg:px-6 lg:py-12 py-6 px-4 flex flex-col">
+          <div className="bg-white dark:bg-gray-800 lg:px-6 lg:py-8 py-4 px-4 flex flex-col">
             <CardHeader className="space-y-2">
               <Link
                 href="/"
@@ -150,13 +150,13 @@ export function SignupForm() {
                   htmlFor="firstName"
                   className="text-gray-700 dark:text-gray-200"
                 >
-                  First Name
+                  Full Name
                 </Label>
                 <Input
                   id="firstName"
                   name="firstName"
                   type="text"
-                  placeholder="Enter first name"
+                  placeholder="Enter full name"
                   value={formData.firstName}
                   onChange={handleInputChange}
                   required
@@ -164,25 +164,7 @@ export function SignupForm() {
                   aria-label="First Name"
                 />
               </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="lastName"
-                  className="text-gray-700 dark:text-gray-200"
-                >
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  type="text"
-                  placeholder="Enter last name"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  required
-                  className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                  aria-label="Last Name"
-                />
-              </div>
+
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
@@ -200,6 +182,25 @@ export function SignupForm() {
                   required
                   className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                   aria-label="Email"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="lastName"
+                  className="text-gray-700 dark:text-gray-200"
+                >
+                  Phone Number
+                </Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  type="number"
+                  placeholder="Enter phone number"
+                  value={formData.lastName}
+                  onChange={handleInputChange}
+                  required
+                  className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  aria-label="Phone Number"
                 />
               </div>
               <div className="space-y-2">

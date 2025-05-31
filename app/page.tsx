@@ -28,6 +28,11 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { RiTwitterXLine } from "react-icons/ri";
+import { FaLinkedin } from "react-icons/fa";
+import { FaGithub } from "react-icons/fa";
+import CountUp from "react-countup";
+import { useInView } from "react-intersection-observer";
 
 interface Testimonial {
   name: string;
@@ -70,6 +75,12 @@ const programs: Program[] = [
   { name: "Mobile App Development", duration: "12 weeks", price: 1300 },
 ];
 
+const stats: { label: string; value: number }[] = [
+  { label: "Ambassadors", value: 5000 },
+  { label: "Referrals", value: 20000 },
+  { label: "Commissions Paid", value: 500000 },
+];
+
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState("");
@@ -77,6 +88,11 @@ export default function LandingPage() {
   const [selectedProgram, setSelectedProgram] = useState("1200");
   const [commission, setCommission] = useState(120);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Define useInView for the stats section
+  const { ref, inView } = useInView({
+    triggerOnce: true, // Only trigger once
+    threshold: 0.3, // Trigger when 30% of the section is visible
+  });
 
   const features: {
     icon: React.ReactNode;
@@ -84,7 +100,7 @@ export default function LandingPage() {
     description: string;
   }[] = [
     {
-      icon: <Code className="h-8 w-8 text-gray-700 dark:text-gray-300 " />,
+      icon: <Code className="h-8 w-8 text-gray-700 dark:text-gray-300" />,
       title: "Promote Elite Courses",
       description: "Share RAD5 Tech Hub’s top-tier tech programs.",
     },
@@ -98,12 +114,6 @@ export default function LandingPage() {
       title: "Earn Instantly",
       description: "Get 10% commission per enrollment.",
     },
-  ];
-
-  const stats: { label: string; value: number }[] = [
-    { label: "Ambassadors", value: 5000 },
-    { label: "Referrals", value: 20000 },
-    { label: "Commissions Paid", value: 500000 },
   ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -151,43 +161,30 @@ export default function LandingPage() {
             aria-label="RAD5 Brokers Network Home"
           >
             <Image src="/rad5hub.png" alt="RAD5 Logo" width={70} height={70} />
-            {/* <span className="max-lg:hidden text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
-              RAD5 Brokers Network
-            </span> */}
           </Link>
           <nav>
-            <div className="md:hidden">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarOpen(true)}
-                aria-label="Open Menu"
-              >
-                <Menu className="h-6 w-6" />
-              </Button>
-            </div>
             <div className="hidden md:flex space-x-6" role="navigation">
               <Link
                 href="#features"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Features
               </Link>
               <Link
                 href="#programs"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Programs
               </Link>
               <Link
                 href="#testimonials"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Testimonials
               </Link>
               <Link
                 href="#contact"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Contact
               </Link>
@@ -204,10 +201,17 @@ export default function LandingPage() {
             </Button>
             <Button
               asChild
-              className="bg-gray-700 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400"
+              className="bg-black/60 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 max-lg:hidden"
               aria-label="Become an Ambassador"
             >
               <Link href="/signup">Become an Ambassador</Link>
+            </Button>
+            <Button
+              asChild
+              className="bg-black/60 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 lg:hidden"
+              aria-label="Become an Ambassador"
+            >
+              <Link href="/signup">Signup</Link>
             </Button>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
@@ -219,9 +223,19 @@ export default function LandingPage() {
               {theme === "dark" ? (
                 <Sun className="h-5 w-5 text-gray-300" />
               ) : (
-                <Moon className="h-5 w-5 text-gray-600" />
+                <Moon className="h-5 w-5 text-black" />
               )}
             </button>
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Open Menu"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -233,7 +247,7 @@ export default function LandingPage() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.3 }}
-              className=" fixed inset-y-0 left-0 w-[70vw] h-screen bg-white dark:bg-gray-800 shadow-xl z-50"
+              className="fixed inset-y-0 left-0 w-[70vw] h-screen bg-white dark:bg-gray-800 shadow-xl z-50"
             >
               <div className="p-4">
                 <Button
@@ -246,6 +260,18 @@ export default function LandingPage() {
                   <X className="h-6 w-6" />
                 </Button>
                 <nav className="flex flex-col space-y-4">
+                  <Link
+                    href="/"
+                    className="flex items-center space-x-2"
+                    aria-label="RAD5 Brokers Network Home"
+                  >
+                    <Image
+                      src="/rad5hub.png"
+                      alt="RAD5 Logo"
+                      width={70}
+                      height={70}
+                    />
+                  </Link>
                   <span className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                     RAD5 Brokers Network
                   </span>
@@ -292,9 +318,9 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center relative z-10 py-12">
+      <section className="min-h-screen flex items-center justify-center relative z-10 py-12 bg-[url('/bg03.jpg')] bg-cover bg-center">
         <div
-          className="absolute inset-0 bg-circuit-pattern opacity-10 dark:opacity-20"
+          className=" absolute inset-0 opacity-10 dark:opacity-20"
           aria-hidden="true"
         />
         <motion.div
@@ -304,7 +330,7 @@ export default function LandingPage() {
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gray-800 dark:text-gray-100 mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black dark:text-gray-100 mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -312,7 +338,7 @@ export default function LandingPage() {
             Earn with RAD5 Brokers Network
           </motion.h1>
           <motion.p
-            className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+            className="text-lg sm:text-xl md:text-2xl text-black dark:text-gray-300 mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -363,7 +389,7 @@ export default function LandingPage() {
             <Button
               size="lg"
               asChild
-              className="bg-gray-700 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 transform hover:scale-105 transition-transform"
+              className="bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 transform hover:scale-105 transition-transform"
               aria-label="Start Earning"
             >
               <Link href="/signup">
@@ -459,8 +485,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 sm:py-20 bg-gray-100 dark:bg-gray-900 relative z-10">
+      {/* Stats Section with Counting Animation */}
+      <section
+        id="stats"
+        className="py-16 sm:py-20 bg-gray-100 dark:bg-gray-900 relative z-10"
+      >
         <div
           className="absolute inset-0 bg-circuit-pattern opacity-10 dark:opacity-20"
           aria-hidden="true"
@@ -469,7 +498,7 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-12">
             RBN’s Impact
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div ref={ref} className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
@@ -483,8 +512,18 @@ export default function LandingPage() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ duration: 2 }}
+                    aria-live="polite"
                   >
-                    {stat.value.toLocaleString()}+
+                    {inView ? (
+                      <CountUp
+                        end={stat.value}
+                        duration={2.5}
+                        separator=","
+                        suffix="+"
+                      />
+                    ) : (
+                      "0+"
+                    )}
                   </motion.span>
                 </h3>
                 <p className="text-gray-600 dark:text-gray-300">{stat.label}</p>
@@ -500,35 +539,33 @@ export default function LandingPage() {
           <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
             What Our Clients Say
           </h2>
-          <div className="relative h-auto min-h-[200px] sm:min-h-[250px]">
-            <AnimatePresence>
+          <div className="relative max-w-2xl mx-auto overflow-hidden">
+            <AnimatePresence mode="wait">
               <motion.div
                 key={currentTestimonial}
                 initial={{ opacity: 0, x: 300 }}
                 animate={{ opacity: 1, x: 0 }}
-                // exit={{ opacity: 0, x: -300 }}
-                transition={{ duration: 0.5 }}
+                exit={{ opacity: 0, x: -300 }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+                className="w-full"
               >
-                <Card className="w-full max-w-2xl mx-auto bg-white dark:bg-gray-800">
+                <Card className="bg-white dark:bg-gray-800">
                   <CardContent className="p-4 sm:p-6">
                     <p className="text-gray-600 dark:text-gray-300 italic mb-4">
-                      {`"${
-                        testimonials[currentTestimonial]?.quote ||
-                        "No testimonial available"
-                      }"`}
+                      {`"${testimonials[currentTestimonial].quote}"`}
                     </p>
                     <div className="flex items-center">
                       <Avatar className="h-10 w-10 mr-4">
                         <AvatarFallback>
-                          {testimonials[currentTestimonial]?.name[0] || "U"}
+                          {testimonials[currentTestimonial].name[0]}
                         </AvatarFallback>
                       </Avatar>
                       <div>
                         <p className="font-semibold text-gray-800 dark:text-gray-100">
-                          {testimonials[currentTestimonial]?.name || "Unknown"}
+                          {testimonials[currentTestimonial].name}
                         </p>
                         <p className="text-gray-600 dark:text-gray-400 text-sm">
-                          {testimonials[currentTestimonial]?.role || "User"}
+                          {testimonials[currentTestimonial].role}
                         </p>
                       </div>
                     </div>
@@ -561,7 +598,7 @@ export default function LandingPage() {
       {/* CTA Footer */}
       <section
         id="contact"
-        className="py-16 sm:py-20 bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900 relative z-10"
+        className="pt-16 dark:bg-gray-900 bg-gray-300 dark:text-white text-black relative z-10 dark:border-t"
       >
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold mb-6">
@@ -594,33 +631,35 @@ export default function LandingPage() {
           <div className="mt-8 flex justify-center space-x-6">
             <Link
               href="https://twitter.com"
-              className="text-white dark:text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
               aria-label="Follow us on Twitter"
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-              </svg>
+              <RiTwitterXLine className="h-6 w-6" />
             </Link>
             <Link
               href="https://linkedin.com"
-              className="text-white dark:text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
               aria-label="Follow us on LinkedIn"
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M20.447 20.447h-3.172v-4.972c0-2.266-.012-5.176-3.147-5.147 0-1.1-.2-2.2v-3.128h3.172V3c0 1.1 1.1-1.1 2.2 2.2h3.147z" />
-              </svg>
+              <FaLinkedin className="h-6 w-6" />
             </Link>
             <Link
               href="https://github.com"
-              className="text-white dark:text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
               aria-label="GitHub"
             >
-              <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0C5.373 0 0 5.373 0 12c0 5.3 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.334-4.033-1.334-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-              </svg>
+              <FaGithub className="h-6 w-6" />
             </Link>
           </div>
         </div>
+        <section className="mt-8 dark:text-white text-gray-900 border-t p-4">
+          <div className="container text-center">
+            © All Copyright 2025 by{" "}
+            <Link href="https://rad5.com.ng/" className="underline">
+              RAD5 Tech Hub
+            </Link>
+          </div>
+        </section>
       </section>
 
       <style jsx global>{`
