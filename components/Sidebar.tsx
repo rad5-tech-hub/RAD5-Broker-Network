@@ -26,29 +26,29 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
   const navItems = [
     {
       name: "Dashboard",
-      href: "/user-dashboard",
+      href: "/agent-dashboard",
       icon: <Menu className="h-5 w-5" />,
     },
     {
       name: "Referrals",
-      href: "/user-dashboard/referrals",
+      href: "/agent-dashboard/referrals",
       icon: <Users className="h-5 w-5" />,
     },
     {
       name: "Earnings",
-      href: "/user-dashboard/earnings",
+      href: "/agent-dashboard/earnings",
       icon: <TbCurrencyNaira className="h-5 w-5" />,
     },
     {
       name: "Withdrawals",
-      href: "/user-dashboard/withdrawals",
+      href: "/agent-dashboard/withdrawals",
       icon: <CreditCard className="h-5 w-5" />,
     },
-    {
-      name: "Profile",
-      href: "/user-dashboard/profile",
-      icon: <User className="h-5 w-5" />,
-    },
+    // {
+    //   name: "Profile",
+    //   href: "/agent-dashboard/profile",
+    //   icon: <User className="h-5 w-5" />,
+    // },
   ];
 
   const handleLogout = () => {
@@ -66,7 +66,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
         <div className="flex flex-col items-center p-4 ">
           <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
           <Link
-            href="/user-dashboard/profile"
+            href="/agent-dashboard/profile"
             className="mt-3 border-b dark:border-gray-700 w-full flex justify-center pb-4"
           >
             <Avatar className="h-12 w-12">
@@ -122,7 +122,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
       </aside>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 bg-opacity-50 z-40 lg:hidden"
           onClick={toggleSidebar}
         />
       )}

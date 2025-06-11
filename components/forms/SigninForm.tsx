@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
 import {
   CardTitle,
   CardDescription,
@@ -15,25 +17,90 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
-export function SigninForm() {
+export default function SigninForm() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setLoading(true);
+
+    try {
+      console.log("Sending request to API with payload:", {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      const response = await fetch(
+        "https://rbn.bookbank.com.ng/api/v1/agent/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        }
+      );
+
+      console.log("Response status:", response.status, response.statusText);
+
+      const data = await response.json();
+      console.log("API Response:", data);
+
+      if (!response.ok) {
+        const errorMessage =
+          data.message ||
+          data.error ||
+          `Login failed with status ${response.status}. Please check your credentials.`;
+        throw new Error(errorMessage);
+      }
+
+      localStorage.setItem("rbn_token", data.token);
+      toast.success(data.message || "Login successful!", {
+        duration: 3000,
+        position: "top-right",
+      });
+      setTimeout(() => {
+        router.push("/agent-dashboard");
+      }, 1000);
+    } catch (err) {
+      console.error("Login Error:", err);
+      let errorMessage = "Something went wrong. Please try again.";
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        if (err.message.includes("Failed to fetch")) {
+          errorMessage =
+            "Unable to connect to the server. Please check your network or try again later.";
+        }
+      } else if (typeof err === "string") {
+        errorMessage = err;
+      }
+      toast.error(errorMessage, {
+        duration: 5000,
+        position: "top-right",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900">
+      <Toaster />
       <form
         className="container px-4 sm:px-6 lg:px-16 mx-auto h-fit"
         onSubmit={handleSubmit}
@@ -46,12 +113,12 @@ export function SigninForm() {
                 <Image
                   src="/rad5hub.png"
                   alt="RAD5 Logo"
-                  width="100"
-                  height="100"
+                  width={100}
+                  height={100}
                 />
               </Link>
               <h1 className="text-4xl font-bold">Welcome to RBN</h1>
-              <p className="text-lg ">
+              <p className="text-lg">
                 Sign in to access your RBN ambassador dashboard and start
                 earning commissions.
               </p>
@@ -96,6 +163,7 @@ export function SigninForm() {
                   required
                   className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                   aria-label="Email"
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -116,6 +184,7 @@ export function SigninForm() {
                     required
                     className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
                     aria-label="Password"
+                    disabled={loading}
                   />
                   <button
                     type="button"
@@ -124,6 +193,7 @@ export function SigninForm() {
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
+                    disabled={loading}
                   >
                     {showPassword ? (
                       <EyeOff className="h-5 w-5" />
@@ -137,13 +207,14 @@ export function SigninForm() {
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-103 transition-transform mt-6"
+                className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-105 transition-transform mt-6"
                 aria-label="Sign In"
+                disabled={loading}
               >
-                Sign In
+                {loading ? "Signing In..." : "Sign In"}
               </Button>
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                Don&apos;t have an account?{" "}
+                Don't have an account?{" "}
                 <Link
                   href="/signup"
                   className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"

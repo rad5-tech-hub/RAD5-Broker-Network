@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { SignupForm } from "@/components/forms/SignupForm";
+import SignupForm from "@/components/forms/SignupForm";
 const SignUp = () => {
   return (
     <div>

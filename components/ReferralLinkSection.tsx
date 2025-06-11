@@ -1,68 +1,114 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Copy, Share2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
 
-export default function ReferralLinkSection() {
-  const [referralLink] = useState("https://rad5brokersnetwork.com/ref/abc123");
+interface ReferralLinkSectionProps {
+  sharableLink?: string;
+}
 
-  const copyToClipboard = async () => {
+export default function ReferralLinkSection({
+  sharableLink,
+}: ReferralLinkSectionProps) {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_RBN_BASE_URL ||
+    "https://rad-5-broker-network.vercel.app";
+  const storedReferralLink = localStorage.getItem("rbn_referral_link") || "";
+  const storedSharableLink = localStorage.getItem("rbn_sharable_link") || "";
+  const expectedReferralLink = sharableLink
+    ? `${baseUrl}/register/agent/${sharableLink}`
+    : "";
+  const [referralLink, setReferralLink] = useState(
+    storedReferralLink || expectedReferralLink
+  );
+  const [isCopied, setIsCopied] = useState(false);
+
+  useEffect(() => {
+    // Validate referral link
+    if (
+      sharableLink &&
+      storedSharableLink &&
+      storedSharableLink !== sharableLink
+    ) {
+      console.warn(
+        "Sharable link mismatch. Stored:",
+        storedSharableLink,
+        "Props:",
+        sharableLink,
+        "Stored Referral Link:",
+        storedReferralLink,
+        "Expected Referral Link:",
+        expectedReferralLink
+      );
+      toast.warning("Referral link updated to match your account.");
+      localStorage.setItem("rbn_referral_link", expectedReferralLink);
+      localStorage.setItem("rbn_sharable_link", sharableLink);
+      setReferralLink(expectedReferralLink);
+    } else if (sharableLink && !storedReferralLink) {
+      localStorage.setItem("rbn_referral_link", expectedReferralLink);
+      localStorage.setItem("rbn_sharable_link", sharableLink);
+      setReferralLink(expectedReferralLink);
+    }
+  }, [
+    sharableLink,
+    storedReferralLink,
+    storedSharableLink,
+    expectedReferralLink,
+  ]);
+
+  const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
-      toast.success("Copied!", {
-        description: "Referral link copied to clipboard.",
-      });
-    } catch {
-      toast.error("Error", {
-        description: "Failed to copy referral link.",
-      });
-    }
-  };
-
-  const shareLink = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Join LearnHub!",
-          text: "Sign up for courses and learn new skills!",
-          url: referralLink,
-        });
-        toast.success("Shared!", {
-          description: "Referral link shared successfully.",
-        });
-      } catch {
-        toast.error("Error", {
-          description: "Failed to share referral link.",
-        });
-      }
-    } else {
-      copyToClipboard();
+      setIsCopied(true);
+      toast.success("Referral link copied!");
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      toast.error("Failed to copy link.");
     }
   };
 
   return (
-    <div className="rounded-lg border bg-white shadow-sm dark:bg-gray-800">
-      <div className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-          Your Referral Link
-        </h3>
+    <div className="flex flex-col space-y-2">
+      <label
+        htmlFor="referralLink"
+        className="text-sm font-medium text-gray-700 dark:text-gray-200"
+      >
+        Your Referral Link
+      </label>
+      <div className="flex space-x-2">
+        <Input
+          id="referralLink"
+          value={referralLink || "No referral link available"}
+          readOnly
+          className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+        />
+        <Button
+          onClick={handleCopy}
+          disabled={!referralLink}
+          className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+          aria-label="Copy referral link"
+        >
+          {isCopied ? "Copied!" : <Copy className="h-5 w-5" />}
+        </Button>
       </div>
-      <div className="p-6 pt-0">
-        <div className="flex items-center space-x-2">
-          <Input value={referralLink} readOnly className="flex-1" />
-          <Button onClick={copyToClipboard}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy
-          </Button>
-          <Button onClick={shareLink}>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-        </div>
-      </div>
+      {referralLink && (
+        <a
+          href={referralLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 dark:text-blue-400 underline text-sm"
+        >
+          Open Referral Link
+        </a>
+      )}
+      {!referralLink && (
+        <p className="text-sm text-red-500 dark:text-red-400">
+          Please sign up or sign in to generate a referral link.
+        </p>
+      )}
     </div>
   );
 }
