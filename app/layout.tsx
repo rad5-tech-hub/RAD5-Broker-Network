@@ -1,3 +1,4 @@
+import { Toaster } from "sonner";
 import { ThemeProvider } from "next-themes";
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
@@ -22,6 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${poppins.className}`}>
+        <Toaster position="top-right" richColors duration={3000} />
+
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

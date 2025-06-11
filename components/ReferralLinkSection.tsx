@@ -19,7 +19,7 @@ export default function ReferralLinkSection({
   const storedReferralLink = localStorage.getItem("rbn_referral_link") || "";
   const storedSharableLink = localStorage.getItem("rbn_sharable_link") || "";
   const expectedReferralLink = sharableLink
-    ? `${baseUrl}/register/agent/${sharableLink}`
+    ? `${baseUrl}/register-agent/${sharableLink}`
     : "";
   const [referralLink, setReferralLink] = useState(
     storedReferralLink || expectedReferralLink
@@ -27,6 +27,20 @@ export default function ReferralLinkSection({
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
+    console.log(
+      "ReferralLinkSection: Stored referral link:",
+      storedReferralLink
+    );
+    console.log(
+      "ReferralLinkSection: Stored sharable link:",
+      storedSharableLink
+    );
+    console.log("ReferralLinkSection: Sharable link prop:", sharableLink);
+    console.log(
+      "ReferralLinkSection: Expected referral link:",
+      expectedReferralLink
+    );
+
     // Validate referral link
     if (
       sharableLink &&
@@ -43,6 +57,7 @@ export default function ReferralLinkSection({
         "Expected Referral Link:",
         expectedReferralLink
       );
+      console.log("Triggering warning toast for link mismatch");
       toast.warning("Referral link updated to match your account.");
       localStorage.setItem("rbn_referral_link", expectedReferralLink);
       localStorage.setItem("rbn_sharable_link", sharableLink);
@@ -63,9 +78,11 @@ export default function ReferralLinkSection({
     try {
       await navigator.clipboard.writeText(referralLink);
       setIsCopied(true);
+      console.log("Triggering success toast for copy");
       toast.success("Referral link copied!");
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
+      console.error("Copy error:", err);
       toast.error("Failed to copy link.");
     }
   };

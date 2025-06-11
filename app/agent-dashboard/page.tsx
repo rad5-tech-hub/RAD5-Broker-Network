@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import Sidebar from "@/components/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReferralLinkSection from "@/components/ReferralLinkSection";
@@ -120,7 +120,7 @@ export default function Dashboard() {
         }
 
         const data: DashboardResponse = await response.json();
-        const expectedReferralLink = `${baseUrl}/register/agent/${data.agent.sharableLink}`;
+        const expectedReferralLink = `${baseUrl}/register-agent/${data.agent.sharableLink}`;
 
         // Validate and update referral link
         if (
@@ -144,11 +144,13 @@ export default function Dashboard() {
         if (mounted) {
           setDashboardData(data);
           setImagePreview(data.agent.profileImage || null);
+          console.log("Triggering success toast for dashboard load");
           toast.success(data.message || "Dashboard data loaded successfully!");
         }
       } catch (err: any) {
         if (err.name === "AbortError") return;
         if (mounted) {
+          console.error("Dashboard error:", err.message);
           toast.error(err.message || "Something went wrong.");
         }
       } finally {
@@ -170,10 +172,12 @@ export default function Dashboard() {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
+        console.log("Triggering error toast for invalid image");
         toast.error("Please upload a valid image file (e.g., JPG, PNG).");
         return;
       }
       if (file.size > 5 * 1024 * 1024) {
+        console.log("Triggering error toast for image size");
         toast.error("Image size must be less than 5MB.");
         return;
       }
@@ -184,6 +188,7 @@ export default function Dashboard() {
 
   const handleImageUpload = async () => {
     if (!profileImageFile) {
+      console.log("Triggering error toast for no image");
       toast.error("Please select an image to upload.");
       return;
     }
@@ -231,10 +236,12 @@ export default function Dashboard() {
           : prev
       );
       setProfileImageFile(null);
+      console.log("Triggering success toast for image upload");
       toast.success(
         successResult.message || "Profile image updated successfully!"
       );
     } catch (err: any) {
+      console.error("Image upload error:", err.message);
       toast.error(err.message || "Failed to update profile image.");
       setImagePreview(dashboardData?.agent.profileImage || null);
     } finally {
@@ -253,7 +260,6 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Toaster />
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
