@@ -53,10 +53,10 @@ interface ErrorResponse {
 
 export default function RegisterPage() {
   // const router = useRouter();
-  //   const { id } = useParams();
+  const { id } = useParams();
   //  console.log(useParams)
 
-  //   console.log(id);
+  console.log(id);
 
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
@@ -150,7 +150,7 @@ export default function RegisterPage() {
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
-      const endpoint = `${apiBaseUrl}/user/register/`;
+      const endpoint = `${apiBaseUrl}/user/register/${id}`;
       console.log("Submitting registration to:", endpoint);
 
       const response = await fetch(endpoint, {

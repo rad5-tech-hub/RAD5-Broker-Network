@@ -24,6 +24,10 @@ export default function ReferralLinkSection({
   const [referralLink, setReferralLink] = useState(
     storedReferralLink || expectedReferralLink
   );
+  const link = `${
+    process.env.NEXT_PUBLIC_FRONTEND_URL ||
+    "https://rad-5-broker-network.vercel.app"
+  }/register/agent/${storedSharableLink}`;
   const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
@@ -76,7 +80,7 @@ export default function ReferralLinkSection({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(referralLink);
+      await navigator.clipboard.writeText(link);
       setIsCopied(true);
       console.log("Triggering success toast for copy");
       toast.success("Referral link copied!");
@@ -98,7 +102,7 @@ export default function ReferralLinkSection({
       <div className="flex space-x-2">
         <Input
           id="referralLink"
-          value={referralLink || "No referral link available"}
+          value={link || "No referral link available"}
           readOnly
           className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
         />
@@ -113,7 +117,7 @@ export default function ReferralLinkSection({
       </div>
       {referralLink && (
         <a
-          href={referralLink}
+          href={link}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 dark:text-blue-400 underline text-sm"
