@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -89,28 +88,10 @@ export default function LandingPage() {
   const [selectedProgram, setSelectedProgram] = useState("1200");
   const [commission, setCommission] = useState(120);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    track: "Backend",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const ref = searchParams.get("ref");
-
-  // Show registration form if ref exists
-  useEffect(() => {
-    if (ref && typeof ref === "string") {
-      setIsRegisterOpen(true);
-    }
-  }, [ref]);
-
-  const { ref: statsRef, inView } = useInView({
-    triggerOnce: true,
-    threshold: 0.3,
+  // Define useInView for the stats section
+  const { ref, inView } = useInView({
+    triggerOnce: true, // Only trigger once
+    threshold: 0.3, // Trigger when 30% of the section is visible
   });
 
   const features: {
@@ -163,47 +144,6 @@ export default function LandingPage() {
       (prev) => (prev - 1 + testimonials.length) % testimonials.length
     );
 
-  const handleRegisterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!ref) {
-      alert("Invalid referral link.");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(
-        `http://rbn.bookbank.com.ng/api/v1/user/register/${ref}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(data.message || "Registration successful!");
-        setFormData({
-          fullName: "",
-          email: "",
-          phoneNumber: "",
-          track: "Backend",
-        });
-        setIsRegisterOpen(false);
-      } else {
-        throw new Error(data.message || "Registration failed.");
-      }
-    } catch (error: any) {
-      alert(error.message || "Something went wrong.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#ffff]/20 dark:bg-gray-900 font-poppins">
       {/* Single Color Background */}
@@ -211,133 +151,6 @@ export default function LandingPage() {
         className="fixed inset-0 bg-[#ffff]/20 dark:bg-gray-900 z-0"
         aria-hidden="true"
       />
-
-      {/* Registration Modal */}
-      <AnimatePresence>
-        {isRegisterOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
-            onClick={() => setIsRegisterOpen(false)}
-          >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                  Register with RBN
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsRegisterOpen(false)}
-                  aria-label="Close"
-                >
-                  <X className="h-6 w-6" />
-                </Button>
-              </div>
-              <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                <div>
-                  <label
-                    htmlFor="fullName"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Full Name
-                  </label>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) =>
-                      setFormData({ ...formData, fullName: e.target.value })
-                    }
-                    required
-                    className="mt-1 bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Email
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    required
-                    className="mt-1 bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="phoneNumber"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Phone Number
-                  </label>
-                  <Input
-                    id="phoneNumber"
-                    type="tel"
-                    value={formData.phoneNumber}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phoneNumber: e.target.value })
-                    }
-                    required
-                    className="mt-1 bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="track"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Program Track
-                  </label>
-                  <Select
-                    value={formData.track}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, track: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-1 bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100">
-                      <SelectValue placeholder="Select a track" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Backend">Backend</SelectItem>
-                      <SelectItem value="Frontend">Frontend</SelectItem>
-                      <SelectItem value="Data Analytics">
-                        Data Analytics
-                      </SelectItem>
-                      <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                      <SelectItem value="Mobile App Development">
-                        Mobile App Development
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Registering..." : "Register"}
-                </Button>
-              </form>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/10 dark:bg-gray-800/10 backdrop-blur-lg">
@@ -347,31 +160,31 @@ export default function LandingPage() {
             className="flex items-center space-x-2"
             aria-label="RAD5 Brokers Network Home"
           >
-            <Image src="/rad5hub.png" alt="RBN Logo" width={70} height={70} />
+            <Image src="/rad5hub.png" alt="RAD5 Logo" width={70} height={70} />
           </Link>
           <nav>
-            <div className="hidden md:flex space-x-6">
+            <div className="hidden md:flex space-x-6" role="navigation">
               <Link
                 href="#features"
-                className="text-black dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Features
               </Link>
               <Link
                 href="#programs"
-                className="text-black dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Programs
               </Link>
               <Link
                 href="#testimonials"
-                className="text-black dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Testimonials
               </Link>
               <Link
                 href="#contact"
-                className="text-black dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+                className="text-black dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
               >
                 Contact
               </Link>
@@ -382,24 +195,30 @@ export default function LandingPage() {
               asChild
               variant="ghost"
               className="text-gray-800 dark:text-gray-100"
+              aria-label="Sign In"
             >
               <Link href="/signin">Sign In</Link>
             </Button>
             <Button
               asChild
               className="bg-black/60 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 max-lg:hidden"
+              aria-label="Become an Ambassador"
             >
               <Link href="/signup">Become an Ambassador</Link>
             </Button>
             <Button
               asChild
               className="bg-black/60 text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 lg:hidden"
+              aria-label="Become an Ambassador"
             >
               <Link href="/signup">Signup</Link>
             </Button>
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               className="p-2 rounded-full hover:bg-gray-200/20 dark:hover:bg-gray-700/20"
+              aria-label={`Switch to ${
+                theme === "dark" ? "light" : "dark"
+              } mode`}
             >
               {theme === "dark" ? (
                 <Sun className="h-5 w-5 text-gray-300" />
@@ -412,6 +231,7 @@ export default function LandingPage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSidebarOpen(true)}
+                aria-label="Open Menu"
               >
                 <Menu className="h-6 w-6" />
               </Button>
@@ -434,15 +254,20 @@ export default function LandingPage() {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsSidebarOpen(false)}
+                  aria-label="Close Menu"
                   className="mb-4"
                 >
                   <X className="h-6 w-6" />
                 </Button>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="/" className="flex items-center space-x-2">
+                  <Link
+                    href="/"
+                    className="flex items-center space-x-2"
+                    aria-label="RAD5 Brokers Network Home"
+                  >
                     <Image
-                      src="/rbn.png"
-                      alt="RBN Logo"
+                      src="/rad5hub.png"
+                      alt="RAD5 Logo"
                       width={70}
                       height={70}
                     />
@@ -487,13 +312,17 @@ export default function LandingPage() {
           <div
             className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
             onClick={() => setIsSidebarOpen(false)}
+            aria-hidden="true"
           />
         )}
       </header>
 
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative z-10 py-12 bg-[url('/bg03.jpg')] bg-cover bg-center">
-        <div className="absolute inset-0 opacity-10 dark:opacity-20" />
+        <div
+          className=" absolute inset-0 opacity-10 dark:opacity-20"
+          aria-hidden="true"
+        />
         <motion.div
           className="container mx-auto px-4 sm:px-6 text-center bg-[#ffff]/20 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl py-8 sm:py-12 max-w-4xl"
           initial={{ opacity: 0, scale: 0.9 }}
@@ -501,7 +330,7 @@ export default function LandingPage() {
           transition={{ duration: 1 }}
         >
           <motion.h1
-            className="text-4xl sm:text-5xl font-bold text-black dark:text-gray-100 mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black dark:text-gray-100 mb-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
@@ -509,7 +338,7 @@ export default function LandingPage() {
             Earn with RAD5 Brokers Network
           </motion.h1>
           <motion.p
-            className="text-lg sm:text-xl text-black dark:text-gray-300 mb-8 max-w-2xl mx-auto"
+            className="text-lg sm:text-xl md:text-2xl text-black dark:text-gray-300 mb-8 max-w-2xl mx-auto"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -527,6 +356,7 @@ export default function LandingPage() {
               <Select
                 value={selectedProgram}
                 onValueChange={setSelectedProgram}
+                aria-label="Select a program"
               >
                 <SelectTrigger className="bg-transparent border-none text-gray-800 dark:text-gray-100">
                   <SelectValue placeholder="Select a program" />
@@ -542,7 +372,10 @@ export default function LandingPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-gray-700 dark:text-gray-300 font-semibold">
+              <p
+                className="text-gray-700 dark:text-gray-300 font-semibold"
+                aria-live="polite"
+              >
                 Earn ${commission.toFixed(0)}
               </p>
             </div>
@@ -556,7 +389,8 @@ export default function LandingPage() {
             <Button
               size="lg"
               asChild
-              className="bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400"
+              className="bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 transform hover:scale-105 transition-transform"
+              aria-label="Start Earning"
             >
               <Link href="/signup">
                 Start Earning <ArrowRight className="ml-2 h-5 w-5" />
@@ -565,7 +399,8 @@ export default function LandingPage() {
             <Button
               size="lg"
               variant="outline"
-              className="text-gray-700 border-gray-700 hover:bg-gray-200/20 dark:text-gray-300 dark:border-gray-300 dark:hover:bg-gray-700/20"
+              className="text-gray-700 border-gray-700 hover:bg-gray-200/20 dark:text-gray-300 dark:border-gray-300 dark:hover:bg-gray-700/20 transform hover:scale-105 transition-transform"
+              aria-label="Learn How It Works"
             >
               <Link href="#features">How It Works</Link>
             </Button>
@@ -655,12 +490,15 @@ export default function LandingPage() {
         id="stats"
         className="py-16 sm:py-20 bg-gray-100 dark:bg-gray-900 relative z-10"
       >
-        <div className="absolute inset-0 bg-circuit-pattern opacity-10 dark:opacity-20" />
+        <div
+          className="absolute inset-0 bg-circuit-pattern opacity-10 dark:opacity-20"
+          aria-hidden="true"
+        />
         <div className="container mx-auto px-4 sm:px-6 text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-gray-100 mb-12">
             RBN’s Impact
           </h2>
-          <div ref={statsRef} className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div ref={ref} className="grid grid-cols-1 sm:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
               <motion.div
                 key={index}
@@ -674,6 +512,7 @@ export default function LandingPage() {
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ duration: 2 }}
+                    aria-live="polite"
                   >
                     {inView ? (
                       <CountUp
@@ -735,10 +574,20 @@ export default function LandingPage() {
               </motion.div>
             </AnimatePresence>
             <div className="flex justify-center space-x-4 mt-4">
-              <Button variant="ghost" size="icon" onClick={prevTestimonial}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={prevTestimonial}
+                aria-label="Previous Testimonial"
+              >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={nextTestimonial}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={nextTestimonial}
+                aria-label="Next Testimonial"
+              >
                 <ChevronRight className="h-5 w-5" />
               </Button>
             </div>
@@ -769,10 +618,12 @@ export default function LandingPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100"
+              aria-label="Email for newsletter"
             />
             <Button
               type="submit"
               className="bg-gray-800 text-white hover:bg-gray-900 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500"
+              aria-label="Subscribe to newsletter"
             >
               Subscribe
             </Button>
@@ -781,25 +632,28 @@ export default function LandingPage() {
             <Link
               href="https://twitter.com"
               className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              aria-label="Follow us on Twitter"
             >
               <RiTwitterXLine className="h-6 w-6" />
             </Link>
             <Link
               href="https://linkedin.com"
               className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              aria-label="Follow us on LinkedIn"
             >
               <FaLinkedin className="h-6 w-6" />
             </Link>
             <Link
               href="https://github.com"
               className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
+              aria-label="GitHub"
             >
               <FaGithub className="h-6 w-6" />
             </Link>
           </div>
         </div>
         <section className="mt-8 dark:text-white text-gray-900 border-t p-4">
-          <div className="container mx-auto text-center">
+          <div className="container text-center">
             © All Copyright 2025 by{" "}
             <Link href="https://rad5.com.ng/" className="underline">
               RAD5 Tech Hub
@@ -807,6 +661,17 @@ export default function LandingPage() {
           </div>
         </section>
       </section>
+
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");
+        .font-poppins {
+          font-family: "Poppins", sans-serif;
+        }
+        .bg-circuit-pattern {
+          background-image: url("data:image/svg+xml;utf8,%3Csvg%20width=%22100%22%20height=%22100%22%20viewBox=%220%200%20100%20100%22%20fill=%22none%22%20stroke=%22%23000000%22%20stroke-width=%221%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M10%2010h80M10%2050h80M10%2090h80M50%2010v80M10%2030h20M70%2030h20M10%2070h20M70%2070h20%22/%3E%3C/svg%3E");
+          background-repeat: repeat;
+        }
+      `}</style>
     </div>
   );
 }
