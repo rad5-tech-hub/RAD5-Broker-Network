@@ -1,90 +1,162 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AdminSidebar from "@/components/AdminSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from "recharts";
-import { RiMenu2Line } from "react-icons/ri";
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { RiMenu2Line, RiSearchLine } from "react-icons/ri";
+import { toast } from "react-hot-toast";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
-export default function AnalyticsPage() {
+interface User {
+  id: string;
+  fullname: string;
+  email: string;
+}
+
+interface DashboardData {
+  stats: {
+    users: User[];
+  };
+  message: string;
+}
+
+export default function ManageUsers() {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [visibleLines, setVisibleLines] = useState<{
-    users: boolean;
-    referrals: boolean;
-    earnings: boolean;
-  }>({
-    users: true,
-    referrals: true,
-    earnings: true,
-  });
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 10;
+  const router = useRouter();
 
-  // Define data type
-  interface DataPoint {
-    month: string;
-    users: number;
-    referrals: number;
-    earnings: number;
-  }
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const token = localStorage.getItem("rbn_admin_token");
+        if (!token) {
+          throw new Error("No authentication token found. Please sign in.");
+        }
 
-  // Dummy data
-  const data: DataPoint[] = [
-    { month: "Jan 2025", users: 200, referrals: 500, earnings: 5000 },
-    { month: "Feb 2025", users: 250, referrals: 600, earnings: 6000 },
-    { month: "Mar 2025", users: 300, referrals: 800, earnings: 8000 },
-    { month: "Apr 2025", users: 280, referrals: 700, earnings: 7000 },
-    { month: "May 2025", users: 320, referrals: 900, earnings: 9000 },
-    { month: "Jun 2025", users: 350, referrals: 1000, earnings: 10000 },
-  ];
+        const apiBaseUrl =
+          process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+          "https://rbn.bookbank.com.ng/api/v1";
+        const endpoint = `${apiBaseUrl}/admin/dashboard`;
 
-  const metrics = [
-    { key: "users", label: "Users", gradientId: "gradientUsers" },
-    { key: "referrals", label: "Referrals", gradientId: "gradientReferrals" },
-    { key: "earnings", label: "Earnings", gradientId: "gradientEarnings" },
-  ] as const;
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  type MetricKey = (typeof metrics)[number]["key"];
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || `HTTP ${response.status}`);
+        }
 
-  const handleLegendClick = (dataKey: MetricKey) => {
-    setVisibleLines((prev) => ({
-      ...prev,
-      [dataKey]: !prev[dataKey],
-    }));
-  };
+        const result = await response.json();
+        setDashboardData(result);
+        toast.success(result.message || "User data loaded successfully!", {
+          duration: 3000,
+          position: "top-right",
+        });
+      } catch (err: any) {
+        toast.error(err.message || "Failed to load user data.", {
+          duration: 5000,
+          position: "top-right",
+        });
+        if (err.message.includes("token")) {
+          router.push("/admin/signin");
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  interface CustomTooltipProps {
-    active?: boolean;
-    payload?: Array<{ name: string; value: number; stroke: string }>;
-    label?: string;
-  }
+    fetchDashboardData();
+  }, [router]);
 
-  const CustomTooltip: React.FC<CustomTooltipProps> = ({
-    active,
-    payload,
-    label,
-  }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-gray-800/90 text-gray-100 p-3 rounded-lg border-none">
-          <p className="font-semibold">{label}</p>
-          {payload.map((entry, index) => (
-            <p key={index} style={{ color: entry.stroke }}>
-              {entry.name}: {entry.value}
-            </p>
-          ))}
-        </div>
-      );
+  const handleDeactivate = async (userId: string) => {
+    try {
+      const token = localStorage.getItem("rbn_admin_token");
+      if (!token) {
+        throw new Error("No authentication token found.");
+      }
+
+      // Placeholder endpoint; replace with actual API
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+        "https://rbn.bookbank.com.ng/api/v1";
+      const endpoint = `${apiBaseUrl}/admin/users/${userId}/deactivate`;
+
+      const response = await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || `HTTP ${response.status}`);
+      }
+
+      toast.success(`User ${userId} deactivated successfully!`, {
+        duration: 3000,
+        position: "top-right",
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to deactivate user.", {
+        duration: 5000,
+        position: "top-right",
+      });
     }
-    return null;
   };
+
+  if (isLoading || !dashboardData) {
+    return (
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 justify-center items-center">
+        <div className="text-gray-800 dark:text-gray-100">Loading...</div>
+      </div>
+    );
+  }
+
+  const filteredUsers = dashboardData.stats.users.filter(
+    (user) =>
+      user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -100,96 +172,113 @@ export default function AnalyticsPage() {
           <RiMenu2Line className="h-6 w-6" />
         </button>
         <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-          Analytics
+          User Management
         </h1>
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Platform Analytics</CardTitle>
+            <CardTitle>Users</CardTitle>
+            <div className="flex items-center gap-4">
+              <div className="relative flex-1 max-w-sm">
+                <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search users by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={data}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <defs>
-                    <linearGradient
-                      id="gradientUsers"
-                      x1="0"
-                      y1="0"
-                      x2="1"
-                      y2="0"
-                    >
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.9} />
-                      <stop
-                        offset="95%"
-                        stopColor="#10b981"
-                        stopOpacity={0.9}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="gradientReferrals"
-                      x1="0"
-                      y1="0"
-                      x2="1"
-                      y2="0"
-                    >
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.9} />
-                      <stop
-                        offset="95%"
-                        stopColor="#f59e0b"
-                        stopOpacity={0.9}
-                      />
-                    </linearGradient>
-                    <linearGradient
-                      id="gradientEarnings"
-                      x1="0"
-                      y1="0"
-                      x2="1"
-                      y2="0"
-                    >
-                      <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.9} />
-                      <stop
-                        offset="95%"
-                        stopColor="#ef4444"
-                        stopOpacity={0.9}
-                      />
-                    </linearGradient>
-                    <filter id="glow">
-                      <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
-                      <feMerge>
-                        <feMergeNode in="coloredBlur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend
-                    onClick={(e) => handleLegendClick(e.value as MetricKey)}
-                    wrapperStyle={{ color: "#9ca3af", cursor: "pointer" }}
-                  />
-                  {metrics.map((metric) =>
-                    visibleLines[metric.key] ? (
-                      <Line
-                        key={metric.key}
-                        type="monotone"
-                        dataKey={metric.key}
-                        name={metric.label}
-                        stroke={`url(#${metric.gradientId})`}
-                        strokeWidth={2}
-                        filter="url(#glow)"
-                        isAnimationActive={true}
-                        animationDuration={1000}
-                      />
-                    ) : null
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {paginatedUsers.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Avatar</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Avatar>
+                          <AvatarFallback>
+                            {user.fullname
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>{user.fullname}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeactivate(user.id)}
+                        >
+                          Deactivate
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-gray-600 dark:text-gray-400">
+                No users found.
+              </p>
+            )}
+            {totalPages > 1 && (
+              <Pagination className="mt-4">
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href="#"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      className={
+                        currentPage === 1
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <PaginationItem key={i}>
+                      <PaginationLink
+                        href="#"
+                        onClick={() => setCurrentPage(i + 1)}
+                        isActive={currentPage === i + 1}
+                      >
+                        {i + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  <PaginationItem>
+                    <PaginationNext
+                      href="#"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      className={
+                        currentPage === totalPages
+                          ? "pointer-events-none opacity-50"
+                          : ""
+                      }
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
           </CardContent>
         </Card>
       </div>

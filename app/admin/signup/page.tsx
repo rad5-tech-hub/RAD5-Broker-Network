@@ -13,18 +13,28 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Copy } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
 interface FormData {
+  fullName: string;
   email: string;
   password: string;
+  confirmPassword: string;
 }
 
-interface AdminSignInResponse {
+interface AdminSignUpResponse {
   message: string;
-  token: string;
+  admin: {
+    id: string;
+    fullName: string;
+    email: string;
+    password: string;
+    role: string;
+    updatedAt: string;
+    createdAt: string;
+  };
 }
 
 interface ErrorResponse {
@@ -32,17 +42,21 @@ interface ErrorResponse {
   error?: string;
 }
 
-export default function AdminSignInPage() {
+export default function AdminSignUpPage() {
   const router = useRouter();
   const [formData, setFormData] = useState<FormData>({
+    fullName: "",
     email: "",
     password: "",
+    confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [suggestedPassword, setSuggestedPassword] = useState<string>("");
 
   const validateEmail = (email: string) => {
     const errors: string[] = [];
@@ -54,10 +68,54 @@ export default function AdminSignInPage() {
 
   const validatePassword = (password: string) => {
     const errors: string[] = [];
-    if (!password.trim()) {
-      errors.push("Password is required.");
+    if (password.length < 8) {
+      errors.push("Password must be at least 8 characters long.");
+    }
+    if (!/[A-Z]/.test(password)) {
+      errors.push("Password must contain at least one uppercase letter.");
+    }
+    if (!/[a-z]/.test(password)) {
+      errors.push("Password must contain at least one lowercase letter.");
+    }
+    if (!/[0-9]/.test(password)) {
+      errors.push("Password must contain at least one number.");
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push("Password must contain at least one special character.");
     }
     return errors;
+  };
+
+  const generatePassword = () => {
+    const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const lower = "abcdefghijklmnopqrstuvwxyz";
+    const numbers = "0123456789";
+    const symbols = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+    const allChars = upper + lower + numbers + symbols;
+    let password = "";
+    password += upper[Math.floor(Math.random() * upper.length)];
+    password += lower[Math.floor(Math.random() * lower.length)];
+    password += numbers[Math.floor(Math.random() * numbers.length)];
+    password += symbols[Math.floor(Math.random() * symbols.length)];
+    for (let i = 4; i < 12; i++) {
+      password += allChars[Math.floor(Math.random() * allChars.length)];
+    }
+    password = password
+      .split("")
+      .sort(() => Math.random() - 0.5)
+      .join("");
+    setSuggestedPassword(password);
+  };
+
+  const handleCopyPassword = () => {
+    navigator.clipboard.writeText(suggestedPassword);
+    toast.success("Password copied to clipboard!");
+    setFormData((prev) => ({
+      ...prev,
+      password: suggestedPassword,
+      confirmPassword: suggestedPassword,
+    }));
+    setPasswordErrors([]);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -68,10 +126,16 @@ export default function AdminSignInPage() {
     } else if (name === "password") {
       setFormData((prev) => ({ ...prev, [name]: value }));
       setPasswordErrors(validatePassword(value));
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const validateForm = (): boolean => {
+    if (!formData.fullName.trim()) {
+      toast.error("Full name is required.");
+      return false;
+    }
     const emailValidation = validateEmail(formData.email);
     if (emailValidation.length > 0) {
       toast.error("Please fix email errors.");
@@ -82,6 +146,10 @@ export default function AdminSignInPage() {
     if (passwordValidation.length > 0) {
       toast.error("Please fix password errors.");
       setPasswordErrors(passwordValidation);
+      return false;
+    }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match.");
       return false;
     }
     return true;
@@ -96,8 +164,14 @@ export default function AdminSignInPage() {
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
-      const endpoint = `${apiBaseUrl}/admin/login`;
-      console.log("Submitting admin sign-in to:", endpoint);
+      const endpoint = `${apiBaseUrl}/admin/create`;
+      console.log("Submitting admin signup to:", endpoint);
+
+      const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+      };
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -105,7 +179,7 @@ export default function AdminSignInPage() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const contentType = response.headers.get("content-type");
@@ -130,24 +204,24 @@ export default function AdminSignInPage() {
         );
       }
 
-      const successResult = result as AdminSignInResponse;
-      console.log("Admin SignIn Response:", successResult);
-
-      // Store the token in localStorage (or your preferred storage mechanism)
-      localStorage.setItem("rbn_admin_token", successResult.token);
+      const successResult = result as AdminSignUpResponse;
+      console.log("Admin SignUp Response:", successResult);
 
       setFormData({
+        fullName: "",
         email: "",
         password: "",
+        confirmPassword: "",
       });
+      setSuggestedPassword("");
       setShowModal(true);
-      toast.success(successResult.message || "Admin sign-in successful!", {
+      toast.success(successResult.message || "Admin signup successful!", {
         duration: 3000,
         position: "top-right",
       });
     } catch (err: any) {
-      console.error("Admin SignIn Error:", err);
-      toast.error(err.message || "Failed to sign in. Please try again.", {
+      console.error("Admin SignUp Error:", err);
+      toast.error(err.message || "Failed to sign up. Please try again.", {
         duration: 5000,
         position: "top-right",
       });
@@ -166,8 +240,7 @@ export default function AdminSignInPage() {
               Success!
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Admin sign-in successful! Welcome to the RAD5 Brokers Network
-              admin dashboard.
+              Admin signup successful! Proceed to sign in.
             </p>
             <div className="flex justify-end space-x-4">
               <Button
@@ -176,9 +249,9 @@ export default function AdminSignInPage() {
               >
                 Close
               </Button>
-              <Link href="/admin/dashboard">
-                <Button className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 hover:cursor-pointer">
-                  Go to Dashboard
+              <Link href="/admin/signin">
+                <Button className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
+                  Go to Sign In
                 </Button>
               </Link>
             </div>
@@ -201,11 +274,10 @@ export default function AdminSignInPage() {
                   height={100}
                 />
               </Link>
-              <h1 className="text-4xl font-bold">
-                Welcome to RAD5 Brokers Network
-              </h1>
+              <h1 className="text-4xl font-bold">Join RAD5 Brokers Network</h1>
               <p className="text-sm max-w-xs">
-                Sign in as an admin to manage the RAD5 Brokers Network platform.
+                Register as an admin to manage the RAD5 Brokers Network
+                platform.
               </p>
             </div>
           </div>
@@ -224,13 +296,33 @@ export default function AdminSignInPage() {
                 />
               </Link>
               <CardTitle className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                Admin Sign In
+                Admin Sign Up
               </CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-300">
-                Sign in to your admin account for RAD5 Brokers Network
+                Create an admin account for RAD5 Brokers Network
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="fullName"
+                  className="text-gray-700 dark:text-gray-200"
+                >
+                  Full Name
+                </Label>
+                <Input
+                  id="fullName"
+                  name="fullName"
+                  type="text"
+                  placeholder="Enter full name"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  required
+                  className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                  disabled={loading}
+                  aria-label="Full Name"
+                />
+              </div>
               <div className="space-y-2">
                 <Label
                   htmlFor="email"
@@ -300,6 +392,66 @@ export default function AdminSignInPage() {
                     ))}
                   </ul>
                 )}
+                <div className="mt-2">
+                  <Button
+                    type="button"
+                    onClick={generatePassword}
+                    className="text-sm bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+                  >
+                    Generate Strong Password
+                  </Button>
+                  {suggestedPassword && (
+                    <div className="flex items-center mt-2">
+                      <p className="text-gray-600 dark:text-gray-300 text-sm mr-2">
+                        Suggested: {suggestedPassword}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyPassword}
+                        className="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                        aria-label="Copy suggested password"
+                      >
+                        <Copy className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-gray-700 dark:text-gray-200"
+                >
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                    disabled={loading}
+                    aria-label="Confirm Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
@@ -309,7 +461,7 @@ export default function AdminSignInPage() {
                 disabled={
                   loading || emailErrors.length > 0 || passwordErrors.length > 0
                 }
-                aria-label="Sign In"
+                aria-label="Sign Up"
               >
                 {loading ? (
                   <svg
@@ -333,15 +485,15 @@ export default function AdminSignInPage() {
                     ></path>
                   </svg>
                 ) : null}
-                {loading ? "Signing In..." : "Sign In"}
+                {loading ? "Signing Up..." : "Sign Up"}
               </Button>
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                Don’t have an admin account?{" "}
+                Already have an admin account?{" "}
                 <Link
-                  href="/admin/signup"
+                  href="/admin/signin"
                   className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
-                  Sign Up
+                  Sign In
                 </Link>
               </div>
             </CardFooter>

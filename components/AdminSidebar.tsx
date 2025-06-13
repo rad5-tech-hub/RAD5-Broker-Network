@@ -31,9 +31,18 @@ export default function AdminSidebar({
   const router = useRouter();
 
   const navItems = [
-    { name: "Dashboard", href: "/admin", icon: <Menu className="h-5 w-5" /> },
     {
-      name: "Users",
+      name: "Dashboard",
+      href: "/admin/dashboard",
+      icon: <Menu className="h-5 w-5" />,
+    },
+    {
+      name: "Manage Agent",
+      href: "/admin/agents",
+      icon: <Menu className="h-5 w-5" />,
+    },
+    {
+      name: "Manage Users",
       href: "/admin/users",
       icon: <Users className="h-5 w-5" />,
     },
@@ -51,7 +60,7 @@ export default function AdminSidebar({
 
   const handleLogout = () => {
     localStorage.clear();
-    router.push("/login");
+    router.push("/admin");
   };
 
   return (
@@ -108,7 +117,7 @@ export default function AdminSidebar({
             </div>
           </div>
           <Link
-            href="/signin"
+            href="/admin"
             className="w-full flex items-center justify-center gap-2 bg-gray-200 py-2 rounded-lg hover:bg-gray-300 dark:bg-white dark:text-black"
             onClick={handleLogout}
           >
@@ -119,7 +128,7 @@ export default function AdminSidebar({
       </aside>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/80 bg-opacity-50 z-40 lg:hidden"
           onClick={toggleSidebar}
         />
       )}
