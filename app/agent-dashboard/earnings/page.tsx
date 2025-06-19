@@ -22,7 +22,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { RiMenu2Line } from "react-icons/ri";
 
-// TypeScript interface for API response
 interface DashboardResponse {
   agentId: string;
   stats: {
@@ -50,7 +49,6 @@ export default function EarningsPage() {
   const [loading, setLoading] = useState(true);
   const [filterPeriod, setFilterPeriod] = useState<string>("all");
 
-  // Fetch dashboard data
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
@@ -60,7 +58,6 @@ export default function EarningsPage() {
           throw new Error("No authentication token found. Please sign in.");
         }
 
-        console.log("Fetching dashboard data...");
         const response = await fetch(
           "https://rbn.bookbank.com.ng/api/v1/agent/dashboard",
           {
@@ -73,15 +70,27 @@ export default function EarningsPage() {
           }
         );
 
-        console.log("Response status:", response.status, response.statusText);
         const data: DashboardResponse = await response.json();
-        console.log("API Response:", data);
 
         if (!response.ok) {
           throw new Error(data.message || "Failed to fetch earnings data.");
         }
 
-        setDashboardData(data);
+        // Ensure transactions have proper values
+        const processedData = {
+          ...data,
+          stats: {
+            ...data.stats,
+            transactions: data.stats.transactions.map((tx) => ({
+              ...tx,
+              earnings: tx.earnings || 0,
+              withdrawals: tx.withdrawals || 0,
+              referrals: tx.referrals || 0,
+            })),
+          },
+        };
+
+        setDashboardData(processedData);
         toast.success(data.message || "Earnings data loaded successfully!", {
           duration: 3000,
         });
@@ -98,9 +107,8 @@ export default function EarningsPage() {
     fetchDashboardData();
   }, []);
 
-  // Filter transactions by period
-  const filteredTransactions =
-    dashboardData?.stats.transactions.filter((tx) => {
+  const filteredTransactions = (dashboardData?.stats.transactions || []).filter(
+    (tx) => {
       if (filterPeriod === "all") return true;
       const txDate = new Date(tx.month);
       const now = new Date();
@@ -111,9 +119,9 @@ export default function EarningsPage() {
         return txDate.getFullYear() === new Date().getFullYear();
       }
       return true;
-    }) || [];
+    }
+  );
 
-  // Download transactions as CSV
   const handleDownloadCSV = () => {
     if (!filteredTransactions.length) {
       toast.error("No transactions to download.", { duration: 5000 });
@@ -123,8 +131,8 @@ export default function EarningsPage() {
     const rows = filteredTransactions.map((tx) => [
       tx.month,
       tx.referrals,
-      `₦${tx.earnings.toFixed(2)}`,
-      `₦${tx.withdrawals.toFixed(2)}`,
+      `₦${(tx.earnings || 0).toFixed(2)}`,
+      `₦${(tx.withdrawals || 0).toFixed(2)}`,
     ]);
     const csvContent = [headers, ...rows]
       .map((row) => row.join(","))
@@ -138,6 +146,11 @@ export default function EarningsPage() {
     link.click();
     document.body.removeChild(link);
     toast.success("Earnings downloaded successfully!", { duration: 3000 });
+  };
+
+  // Helper function to safely format currency
+  const formatCurrency = (value: number | undefined) => {
+    return `₦${(value || 0).toFixed(2)}`;
   };
 
   return (
@@ -172,7 +185,7 @@ export default function EarningsPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                    ₦{(dashboardData?.stats.totalEarnings || 0).toFixed(2)}
+                    {formatCurrency(dashboardData?.stats.totalEarnings)}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     From {dashboardData?.stats.transactionCount || 0}{" "}
@@ -231,10 +244,10 @@ export default function EarningsPage() {
                               {tx.referrals}
                             </TableCell>
                             <TableCell className="text-right">
-                              ₦{tx.earnings.toFixed(2)}
+                              {formatCurrency(tx.earnings)}
                             </TableCell>
                             <TableCell className="text-right">
-                              ₦{tx.withdrawals.toFixed(2)}
+                              {formatCurrency(tx.withdrawals)}
                             </TableCell>
                           </TableRow>
                         ))}

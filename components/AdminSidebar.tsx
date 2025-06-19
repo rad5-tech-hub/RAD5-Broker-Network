@@ -51,11 +51,11 @@ export default function AdminSidebar({
       href: "/admin/withdrawals",
       icon: <CreditCard className="h-5 w-5" />,
     },
-    {
-      name: "Analytics",
-      href: "/admin/analytics",
-      icon: <BarChart2 className="h-5 w-5" />,
-    },
+    // {
+    //   name: "Analytics",
+    //   href: "/admin/analytics",
+    //   icon: <BarChart2 className="h-5 w-5" />,
+    // },
   ];
 
   const handleLogout = () => {
@@ -103,7 +103,7 @@ export default function AdminSidebar({
         <div className="absolute bottom-4 p-4 w-full">
           <div className="p-4">
             <div className="flex items-center justify-between">
-              <span className="text-gray-700 dark:text-gray-200">Theme</span>
+              {/* <span className="text-gray-700 dark:text-gray-200">Theme</span> */}
               <div className="flex items-center space-x-2">
                 <Sun className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                 <Switch

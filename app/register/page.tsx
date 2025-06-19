@@ -228,11 +228,6 @@ export default function RegisterPage() {
               >
                 Close
               </Button>
-              <Link href="/signin">
-                <Button className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">
-                  Go to Sign In
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -423,15 +418,6 @@ export default function RegisterPage() {
                 ) : null}
                 {loading ? "Registering..." : "Register"}
               </Button>
-              <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                Already have an account?{" "}
-                <Link
-                  href="/signin"
-                  className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                >
-                  Sign In
-                </Link>
-              </div>
             </CardFooter>
           </div>
         </div>

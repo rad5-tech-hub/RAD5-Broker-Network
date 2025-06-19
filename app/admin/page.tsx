@@ -39,7 +39,6 @@ export default function AdminSignInPage() {
     password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
@@ -97,7 +96,6 @@ export default function AdminSignInPage() {
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
       const endpoint = `${apiBaseUrl}/admin/login`;
-      console.log("Submitting admin sign-in to:", endpoint);
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -111,7 +109,6 @@ export default function AdminSignInPage() {
       const contentType = response.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await response.text();
-        console.error("Non-JSON response:", text);
         throw new Error(
           `Invalid response format: Expected JSON, received ${
             contentType || "unknown"
@@ -131,22 +128,22 @@ export default function AdminSignInPage() {
       }
 
       const successResult = result as AdminSignInResponse;
-      console.log("Admin SignIn Response:", successResult);
-
-      // Store the token in localStorage (or your preferred storage mechanism)
       localStorage.setItem("rbn_admin_token", successResult.token);
 
-      setFormData({
-        email: "",
-        password: "",
-      });
-      setShowModal(true);
-      toast.success(successResult.message || "Admin sign-in successful!", {
-        duration: 3000,
-        position: "top-right",
-      });
+      // Show success toast
+      toast.success(
+        successResult.message || "Sign in successful! Redirecting...",
+        {
+          duration: 2000,
+          position: "top-right",
+        }
+      );
+
+      // Redirect after a short delay
+      setTimeout(() => {
+        router.push("/admin/dashboard");
+      }, 1500);
     } catch (err: any) {
-      console.error("Admin SignIn Error:", err);
       toast.error(err.message || "Failed to sign in. Please try again.", {
         duration: 5000,
         position: "top-right",
@@ -159,32 +156,6 @@ export default function AdminSignInPage() {
   return (
     <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900">
       <Toaster position="top-right" />
-      {showModal && (
-        <div className="fixed container px-[5vw] mx-auto inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Success!
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Admin sign-in successful! Welcome to the RAD5 Brokers Network
-              admin dashboard.
-            </p>
-            <div className="flex justify-end space-x-4">
-              <Button
-                onClick={() => setShowModal(false)}
-                className="bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300"
-              >
-                Close
-              </Button>
-              <Link href="/admin/dashboard">
-                <Button className="bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 hover:cursor-pointer">
-                  Go to Dashboard
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
       <form
         className="container px-4 sm:px-6 lg:px-8 mx-auto h-fit"
         onSubmit={handleSubmit}
@@ -336,7 +307,7 @@ export default function AdminSignInPage() {
                 {loading ? "Signing In..." : "Sign In"}
               </Button>
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                Don’t have an admin account?{" "}
+                Don't have an admin account?{" "}
                 <Link
                   href="/admin/signup"
                   className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"

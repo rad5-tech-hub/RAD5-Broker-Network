@@ -4,11 +4,13 @@ import { useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { Menu, LogOut, Users, CreditCard, User, Sun, Moon } from "lucide-react";
+import { Menu, LogOut, Users, Sun, Moon } from "lucide-react";
 import { TbCurrencyNaira } from "react-icons/tb";
+import { FaWhatsapp } from "react-icons/fa";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
@@ -22,6 +24,10 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
     typeof window !== "undefined"
       ? localStorage.getItem("userProfileImage") || "/default-avatar.png"
       : "/default-avatar.png";
+  const agentName =
+    typeof window !== "undefined"
+      ? localStorage.getItem("userFullName") || "Agent"
+      : "Agent";
 
   const navItems = [
     {
@@ -35,25 +41,32 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
       icon: <Users className="h-5 w-5" />,
     },
     {
-      name: "Earnings",
-      href: "/agent-dashboard/earnings",
+      name: "Earnings/Withdrawals",
+      href: "/agent-dashboard/earnings-and-withdrawals",
       icon: <TbCurrencyNaira className="h-5 w-5" />,
     },
-    {
-      name: "Withdrawals",
-      href: "/agent-dashboard/withdrawals",
-      icon: <CreditCard className="h-5 w-5" />,
-    },
-    // {
-    //   name: "Profile",
-    //   href: "/agent-dashboard/profile",
-    //   icon: <User className="h-5 w-5" />,
-    // },
   ];
 
   const handleLogout = () => {
     localStorage.clear();
     router.push("/signin");
+  };
+
+  const handleContactUs = () => {
+    const message = `Hello RBN Support Team,
+
+My name is ${agentName}. I am an agent with the Rad5 Brokers Network (RBN) and I am reaching out to report an issue. Here are the details:
+
+[Please describe your issue here]
+
+Please assist me in resolving this promptly. Thank you for your support.
+
+Best regards,
+${agentName}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/2347065286561?text=${encodedMessage}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   return (
@@ -63,7 +76,7 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
-        <div className="flex flex-col items-center p-4 ">
+        <div className="flex flex-col items-center p-4">
           <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
           <Link
             href="/agent-dashboard/profile"
@@ -94,30 +107,36 @@ export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
             </ul>
           </nav>
         </div>
-        <div className="">
-          <div className="p-4 mt-auto">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-gray-700 dark:text-gray-200">Theme</span>
-              <div className="flex items-center space-x-2">
-                <Sun className="h-4 w-4 text-gray-700 dark:text-gray-200" />
-                <Switch
-                  checked={theme === "dark"}
-                  onCheckedChange={() =>
-                    setTheme(theme === "dark" ? "light" : "dark")
-                  }
-                />
-                <Moon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
-              </div>
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Sun className="h-4 w-4 text-gray-700 dark:text-gray-200" />
+              <Switch
+                checked={theme === "dark"}
+                onCheckedChange={() =>
+                  setTheme(theme === "dark" ? "light" : "dark")
+                }
+                aria-label="Toggle theme between light and dark mode"
+              />
+              <Moon className="h-4 w-4 text-gray-700 dark:text-gray-200" />
             </div>
-            <Button
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </Button>
           </div>
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2 mb-2"
+            onClick={handleContactUs}
+          >
+            <FaWhatsapp className="h-4 w-4 text-green-600" />
+            Contact Us
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full flex items-center justify-center gap-2"
+            onClick={handleLogout}
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
         </div>
       </aside>
       {isOpen && (

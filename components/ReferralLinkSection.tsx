@@ -115,7 +115,7 @@ export default function ReferralLinkSection({
           {isCopied ? "Copied!" : <Copy className="h-5 w-5" />}
         </Button>
       </div>
-      {referralLink && (
+      {/* {referralLink && (
         <a
           href={link}
           target="_blank"
@@ -124,7 +124,7 @@ export default function ReferralLinkSection({
         >
           Open Referral Link
         </a>
-      )}
+      )} */}
       {!referralLink && (
         <p className="text-sm text-red-500 dark:text-red-400">
           Please sign up or sign in to generate a referral link.

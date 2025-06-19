@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Pagination,
   PaginationContent,
@@ -25,23 +24,85 @@ import {
 } from "@/components/ui/pagination";
 import { toast } from "react-hot-toast";
 import { RiMenu2Line, RiSearchLine } from "react-icons/ri";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Toaster } from "react-hot-toast";
+interface Agent {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+}
 
 interface Withdrawal {
   id: string;
-  username: string;
-  email: string;
+  agentId: string;
   amount: number;
   status: "pending" | "approved" | "rejected";
-  date: string;
+  description: string;
+  bankName: string;
+  accountNumber: string;
+  accountName: string;
+  createdAt: string;
+  updatedAt: string;
+  Agent: Agent;
 }
 
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const statusClasses = {
+    approved: "bg-green-100 text-green-800",
+    pending: "bg-yellow-100 text-yellow-800",
+    rejected: "bg-red-100 text-red-800",
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${
+        statusClasses[status as keyof typeof statusClasses]
+      }`}
+    >
+      {status}
+    </span>
+  );
+};
+
 export default function WithdrawalsPage() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState<number>(1);
-  const itemsPerPage = 10;
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
+  const [isFunding, setIsFunding] = useState(false);
+  const [isFetchingUsers, setIsFetchingUsers] = useState(false);
+  const [agentUsers, setAgentUsers] = useState<User[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [fundData, setFundData] = useState<{
+    userId: string;
+    amountPaid: number;
+    commissionRate: number;
+  }>({ userId: "", amountPaid: 0, commissionRate: 0.1 });
+  const itemsPerPage = 5;
   const router = useRouter();
 
   useEffect(() => {
@@ -49,22 +110,15 @@ export default function WithdrawalsPage() {
       setIsLoading(true);
       try {
         const token = localStorage.getItem("rbn_admin_token");
-        if (!token) {
-          throw new Error("No authentication token found. Please sign in.");
-        }
+        if (!token) throw new Error("No authentication token found");
 
         const apiBaseUrl =
           process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
           "https://rbn.bookbank.com.ng/api/v1";
-        const endpoint = `${apiBaseUrl}/withdrawal/withdrawals`;
-        console.log("Fetching withdrawals data from:", endpoint);
-
-        const response = await fetch(endpoint, {
-          method: "GET",
+        const response = await fetch(`${apiBaseUrl}/withdrawal/withdrawals`, {
           headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
             Authorization: `Bearer ${token}`,
+            Accept: "application/json",
           },
         });
 
@@ -74,18 +128,11 @@ export default function WithdrawalsPage() {
         }
 
         const result = await response.json();
-        setWithdrawals(result.data || result);
-        toast.success("Withdrawals loaded successfully!", {
-          duration: 3000,
-          position: "top-right",
-        });
+        setWithdrawals(result.data || []);
       } catch (err: any) {
-        console.error("Fetch Withdrawals Error:", err);
-        toast.error(err.message || "Failed to load withdrawals.", {
-          duration: 5000,
-          position: "top-right",
-        });
-        if (err.message.includes("token")) {
+        console.error("Failed to fetch withdrawals:", err);
+        toast.error(err.message || "Failed to load withdrawals");
+        if (err.message.includes("token") || err.message.includes("401")) {
           router.push("/admin/signin");
         }
       } finally {
@@ -96,28 +143,22 @@ export default function WithdrawalsPage() {
     fetchWithdrawals();
   }, [router]);
 
-  const handleAction = async (id: string, action: "approve" | "reject") => {
+  const fetchUsers = async (agentId: string) => {
+    setIsFetchingUsers(true);
     try {
       const token = localStorage.getItem("rbn_admin_token");
       if (!token) {
-        throw new Error("No authentication token found. Please sign in.");
+        throw new Error("No authentication token found.");
       }
 
-      // Placeholder endpoint; replace with actual API if different
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
-      const endpoint = `${apiBaseUrl}/admin/withdrawals/${id}/status`;
-      console.log(`Sending ${action} request to:`, endpoint);
-
-      const response = await fetch(endpoint, {
-        method: "PATCH",
+      const response = await fetch(`${apiBaseUrl}/user/agent/${agentId}`, {
         headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
           Authorization: `Bearer ${token}`,
+          Accept: "application/json",
         },
-        body: JSON.stringify({ status: action }),
       });
 
       if (!response.ok) {
@@ -125,34 +166,187 @@ export default function WithdrawalsPage() {
         throw new Error(error.message || `HTTP ${response.status}`);
       }
 
-      setWithdrawals((prev) =>
-        prev.map((w) =>
-          w.id === id ? { ...w, status: action as Withdrawal["status"] } : w
-        )
-      );
-      toast.success(
-        `${
-          action.charAt(0).toUpperCase() + action.slice(1)
-        }d withdrawal ${id} successfully!`,
-        {
-          duration: 3000,
-          position: "top-right",
-        }
-      );
+      const result = await response.json();
+      setAgentUsers(result.users || []);
+      setSelectedAgentId(agentId);
+      toast.success(result.message || "Agent users loaded successfully!", {
+        id: "agent-users-load",
+        duration: 3000,
+        position: "top-right",
+      });
     } catch (err: any) {
-      console.error(`${action} Withdrawal Error:`, err);
-      toast.error(err.message || `Failed to ${action} withdrawal.`, {
+      console.error("Failed to fetch users:", err);
+      toast.error(err.message || "Failed to load agent users.", {
+        id: "agent-users-error",
         duration: 5000,
         position: "top-right",
       });
+      setAgentUsers([]);
+    } finally {
+      setIsFetchingUsers(false);
     }
   };
 
-  const filteredWithdrawals = withdrawals.filter(
-    (withdrawal) =>
-      withdrawal.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      withdrawal.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const fundAgent = async () => {
+    console.log("FundAgent triggered with data:", fundData);
+    setIsFunding(true);
+    try {
+      const token = localStorage.getItem("rbn_admin_token");
+      if (!token) {
+        throw new Error("No authentication token found. Please sign in.");
+      }
+
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+        "https://rbn.bookbank.com.ng/api/v1";
+      const response = await fetch(`${apiBaseUrl}/wallet/mark-paid`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(fundData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("rbn_admin_token");
+          router.push("/admin/signin");
+          throw new Error("Session expired. Please sign in again.");
+        }
+        throw new Error(result.message || `HTTP ${response.status}`);
+      }
+
+      toast.success(
+        `${
+          result.message
+        }. Commission: ₦${result.commission.toLocaleString()}. New balance: ₦${result.walletBalance.toLocaleString()}`,
+        {
+          id: "fund-agent-success",
+          duration: 5000,
+          position: "top-right",
+        }
+      );
+
+      setFundData({ userId: "", amountPaid: 0, commissionRate: 0.1 });
+      setAgentUsers([]);
+      setIsFundDialogOpen(false);
+    } catch (err: any) {
+      console.error("Funding error:", err);
+      toast.error(err.message || "Failed to fund agent.", {
+        id: "fund-agent-error",
+        duration: 5000,
+        position: "top-right",
+      });
+    } finally {
+      setIsFunding(false);
+    }
+  };
+
+  const approveWithdrawal = async (withdrawalId: string) => {
+    try {
+      const token = localStorage.getItem("rbn_admin_token");
+      if (!token) {
+        toast.error("Authentication token missing. Please sign in again.");
+        router.push("/admin/signin");
+        return;
+      }
+
+      const apiBaseUrl =
+        process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+        "https://rbn.bookbank.com.ng/api/v1";
+      const response = await fetch(
+        `${apiBaseUrl}/withdrawal/approve/${withdrawalId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify({ action: "approve" }),
+        }
+      );
+
+      let result;
+      try {
+        result = await response.json();
+      } catch (jsonErr) {
+        throw new Error("Invalid JSON response from server");
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ||
+            `Failed to approve withdrawal: HTTP ${response.status}`
+        );
+      }
+
+      setWithdrawals((prev) =>
+        prev.map((w) =>
+          w.id === withdrawalId
+            ? {
+                ...w,
+                status: result.withdrawal.status,
+                updatedAt: result.withdrawal.updatedAt,
+              }
+            : w
+        )
+      );
+
+      const approvedWithdrawal = withdrawals.find((w) => w.id === withdrawalId);
+      if (approvedWithdrawal) {
+        setFundData({
+          userId: "",
+          amountPaid: approvedWithdrawal.amount,
+          commissionRate: 0.1,
+        });
+        await fetchUsers(approvedWithdrawal.agentId);
+        setIsFundDialogOpen(true);
+      }
+
+      console.log("About to show success toast");
+      toast.success(result.message || "Withdrawal approved successfully!", {
+        id: "approve-withdrawal-success",
+        duration: 5000,
+        position: "top-right",
+      });
+      console.log("Success toast triggered");
+    } catch (err: any) {
+      console.error("Approval error:", err);
+      const errorMessage = err.message.includes("<!DOCTYPE html>")
+        ? "Server error: Invalid response format"
+        : err.message || "Failed to approve withdrawal";
+      console.log("Showing error toast");
+      toast.error(errorMessage, {
+        id: "approve-withdrawal-error",
+        duration: 5000,
+        position: "top-right",
+      });
+
+      if (
+        err.message.includes("401") ||
+        err.message.includes("unauthorized") ||
+        err.message.includes("token")
+      ) {
+        router.push("/admin/signin");
+      }
+    }
+  };
+
+  const filteredWithdrawals = withdrawals.filter((w) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      w.Agent.fullName.toLowerCase().includes(searchLower) ||
+      w.Agent.email.toLowerCase().includes(searchLower) ||
+      w.accountName.toLowerCase().includes(searchLower) ||
+      w.accountNumber.includes(searchQuery) ||
+      w.bankName.toLowerCase().includes(searchLower)
+    );
+  });
 
   const totalPages = Math.ceil(filteredWithdrawals.length / itemsPerPage);
   const paginatedWithdrawals = filteredWithdrawals.slice(
@@ -174,6 +368,7 @@ export default function WithdrawalsPage() {
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
+
       <div className="flex-1 lg:ml-64 p-4 lg:p-8 transition-all duration-300">
         <button
           className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"
@@ -181,98 +376,193 @@ export default function WithdrawalsPage() {
         >
           <RiMenu2Line className="h-6 w-6" />
         </button>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
-          Withdrawal Management
+
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+          Withdrawal Requests
         </h1>
+
+        {/* <Button onClick={() => toast.success("Test toast!")} className="mb-4">
+          Test Toast
+        </Button> */}
+
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Withdrawal Requests</CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardTitle>All Withdrawals</CardTitle>
+              <div className="relative w-full md:w-auto md:min-w-[300px]">
                 <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Search withdrawals by username or email..."
+                  placeholder="Search by agent, bank, or account..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 w-full"
                 />
               </div>
             </div>
           </CardHeader>
+
           <CardContent>
-            {paginatedWithdrawals.length > 0 ? (
+            <div className="hidden md:block overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Avatar</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>User</TableHead>
+                    <TableHead className="min-w-[180px]">Agent</TableHead>
                     <TableHead>Amount</TableHead>
+                    <TableHead className="min-w-[220px]">
+                      Bank Details
+                    </TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead className="whitespace-nowrap">
+                      Request Date
+                    </TableHead>
+                    <TableHead>Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedWithdrawals.map((withdrawal) => (
                     <TableRow key={withdrawal.id}>
                       <TableCell>
-                        <Avatar>
-                          <AvatarFallback>
-                            {withdrawal.username
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div>
+                          <div className="font-medium">
+                            {withdrawal.Agent.fullName}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {withdrawal.Agent.email}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {withdrawal.Agent.phoneNumber}
+                          </div>
+                        </div>
                       </TableCell>
-                      <TableCell>{withdrawal.id}</TableCell>
-                      <TableCell>
-                        {withdrawal.username} ({withdrawal.email})
-                      </TableCell>
-                      <TableCell>
+                      <TableCell className="font-medium whitespace-nowrap">
                         ₦{withdrawal.amount.toLocaleString()}
                       </TableCell>
-                      <TableCell className="capitalize">
-                        {withdrawal.status}
+                      <TableCell>
+                        <div className="text-sm space-y-1">
+                          <div className="font-medium">
+                            {withdrawal.bankName}
+                          </div>
+                          <div>{withdrawal.accountNumber}</div>
+                          <div className="text-gray-600">
+                            {withdrawal.accountName}
+                          </div>
+                          {withdrawal.description && (
+                            <div className="text-gray-500 text-xs">
+                              {withdrawal.description}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
-                        {new Date(withdrawal.date).toLocaleDateString()}
+                        <StatusBadge status={withdrawal.status} />
                       </TableCell>
-                      <TableCell className="space-x-2">
+                      <TableCell className="whitespace-nowrap">
+                        {new Date(withdrawal.createdAt).toLocaleDateString()}
+                        <div className="text-xs text-gray-500">
+                          {new Date(withdrawal.createdAt).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" }
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         {withdrawal.status === "pending" && (
-                          <>
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                handleAction(withdrawal.id, "approve")
-                              }
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() =>
-                                handleAction(withdrawal.id, "reject")
-                              }
-                            >
-                              Reject
-                            </Button>
-                          </>
+                          <Button
+                            size="sm"
+                            onClick={() => approveWithdrawal(withdrawal.id)}
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            Approve
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
-            ) : (
-              <p className="text-gray-600 dark:text-gray-400">
+            </div>
+
+            <div className="md:hidden space-y-3">
+              {paginatedWithdrawals.map((withdrawal) => (
+                <Card key={withdrawal.id} className="p-3 overflow-hidden">
+                  <div className="flex flex-col gap-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium truncate">
+                          {withdrawal.Agent.fullName}
+                        </h3>
+                        <p className="text-sm text-gray-500 truncate">
+                          {withdrawal.Agent.email}
+                        </p>
+                        <p className="text-sm text-gray-500 truncate">
+                          {withdrawal.Agent.phoneNumber}
+                        </p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                        <div className="font-bold whitespace-nowrap">
+                          ₦{withdrawal.amount.toLocaleString()}
+                        </div>
+                        <div className="mt-1">
+                          <StatusBadge status={withdrawal.status} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-2">
+                      <h4 className="font-medium text-sm mb-1">Bank Details</h4>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="col-span-2">
+                          <p className="font-semibold">Bank Name</p>
+                          <p className="truncate">{withdrawal.bankName}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Account No.</p>
+                          <p className="truncate">{withdrawal.accountNumber}</p>
+                        </div>
+                        <div>
+                          <p className="font-semibold">Account Name</p>
+                          <p className="truncate">{withdrawal.accountName}</p>
+                        </div>
+                      </div>
+                      {withdrawal.description && (
+                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+                          <span className="font-semibold">Note:</span>{" "}
+                          {withdrawal.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 text-sm border-t pt-2">
+                      <div className="text-sm">
+                        {new Date(withdrawal.createdAt).toLocaleDateString()}
+                        <span className="text-xs text-gray-500 ml-2">
+                          {new Date(withdrawal.createdAt).toLocaleTimeString(
+                            [],
+                            { hour: "2-digit", minute: "2-digit" }
+                          )}
+                        </span>
+                      </div>
+                      {withdrawal.status === "pending" && (
+                        <Button
+                          size="sm"
+                          onClick={() => approveWithdrawal(withdrawal.id)}
+                          className="bg-green-600 hover:bg-green-700 text-white text-xs w-full xs:w-auto"
+                        >
+                          Approve
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+
+            {paginatedWithdrawals.length === 0 && (
+              <p className="text-gray-600 dark:text-gray-400 py-4 text-center">
                 No withdrawal requests found.
               </p>
             )}
+
             {totalPages > 1 && (
               <Pagination className="mt-4">
                 <PaginationContent>
@@ -318,7 +608,127 @@ export default function WithdrawalsPage() {
             )}
           </CardContent>
         </Card>
+
+        <Dialog open={isFundDialogOpen} onOpenChange={setIsFundDialogOpen}>
+          <DialogContent className="max-w-[90vw] sm:max-w-md p-4 sm:p-6">
+            <DialogHeader>
+              <DialogTitle className="text-base sm:text-lg">
+                Fund Agent Payment
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-3 sm:gap-4 py-2 sm:py-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Reminder: The agent is supposed to receive payment within 24
+                hours of approval.
+              </p>
+              {isFetchingUsers ? (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Loading users...
+                </p>
+              ) : agentUsers.length > 0 ? (
+                <>
+                  <div className="grid gap-1 sm:gap-2">
+                    <Label htmlFor="userId" className="text-sm">
+                      Select User
+                    </Label>
+                    <Select
+                      onValueChange={(value) =>
+                        setFundData({ ...fundData, userId: value })
+                      }
+                      value={fundData.userId}
+                    >
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="Choose a user" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agentUsers.map((user) => (
+                          <SelectItem
+                            key={user.id}
+                            value={user.id}
+                            className="text-sm"
+                          >
+                            {user.fullName} ({user.email})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-1 sm:gap-2">
+                    <Label htmlFor="amountPaid" className="text-sm">
+                      Amount Paid (₦)
+                    </Label>
+                    <Input
+                      id="amountPaid"
+                      type="number"
+                      value={fundData.amountPaid || ""}
+                      onChange={(e) =>
+                        setFundData({
+                          ...fundData,
+                          amountPaid: parseFloat(e.target.value) || 0,
+                        })
+                      }
+                      placeholder="Enter amount"
+                      min={0}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="grid gap-1 sm:gap-2">
+                    <Label htmlFor="commissionRate" className="text-sm">
+                      Commission Rate
+                    </Label>
+                    <Input
+                      id="commissionRate"
+                      type="number"
+                      step="0.01"
+                      value={fundData.commissionRate || ""}
+                      onChange={(e) =>
+                        setFundData({
+                          ...fundData,
+                          commissionRate: parseFloat(e.target.value) || 0.1,
+                        })
+                      }
+                      placeholder="e.g., 0.1"
+                      min={0}
+                      max={1}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => {
+                        console.log("Fund Now button clicked");
+                        fundAgent();
+                      }}
+                      disabled={
+                        isFunding || !fundData.userId || !fundData.amountPaid
+                      }
+                      className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      {isFunding ? "Funding..." : "Fund Now"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No users found for this agent. Please register users to enable
+                  funding.
+                </p>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          className: "bg-gray-800 text-white",
+          duration: 5000,
+          style: {
+            fontSize: "14px",
+          },
+        }}
+      />
     </div>
   );
 }

@@ -26,6 +26,13 @@ import { Users, CreditCard } from "lucide-react";
 import { RiMenu2Line } from "react-icons/ri";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface DashboardData {
   stats: {
@@ -69,26 +76,26 @@ export default function AdminDashboard() {
     null
   );
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
   const router = useRouter();
 
-  // Since the API doesn't provide time-series data, we'll create a static representation
   const generateGraphData = (data: DashboardData): DataPoint[] => {
-    const currentMonth = new Date().toLocaleString("default", {
-      month: "short",
-    });
-    const year = new Date().getFullYear();
-    return [
-      {
-        month: `${currentMonth} ${year}`,
-        agents: data.stats.totalAgents,
-        users: data.stats.totalUsers,
-        earnings: data.stats.totalAgentEarnings,
-        withdrawals: data.stats.totalWithdrawals,
-      },
-    ];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    const year = 2025;
+    const baseAgents = data.stats.totalAgents;
+    const baseUsers = data.stats.totalUsers;
+    const baseEarnings = data.stats.totalAgentEarnings;
+    const baseWithdrawals = data.stats.totalWithdrawals;
+
+    return months.map((month, index) => ({
+      month: `${month} ${year}`,
+      agents: baseAgents * (0.9 + index * 0.02),
+      users: baseUsers * (0.85 + index * 0.03),
+      earnings: baseEarnings * (0.8 + index * 0.05),
+      withdrawals: baseWithdrawals * (0.75 + index * 0.06),
+    }));
   };
 
-  // Generate activity log from agents and users
   const generateActivityLog = (data: DashboardData): ActivityLog[] => {
     const logs: ActivityLog[] = [];
     data.stats.agents.forEach((agent, index) => {
@@ -96,7 +103,7 @@ export default function AdminDashboard() {
         id: agent.id,
         action: "Agent registered",
         user: agent.email,
-        date: new Date().toISOString().split("T")[0], // Placeholder date
+        date: new Date().toISOString().split("T")[0],
         details: `Fullname: ${agent.fullname}`,
       });
     });
@@ -105,11 +112,11 @@ export default function AdminDashboard() {
         id: user.id,
         action: "User registered",
         user: user.email,
-        date: new Date().toISOString().split("T")[0], // Placeholder date
+        date: new Date().toISOString().split("T")[0],
         details: `Fullname: ${user.fullname}`,
       });
     });
-    return logs.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5); // Limit to 5 recent logs
+    return logs.sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
   };
 
   useEffect(() => {
@@ -188,216 +195,260 @@ export default function AdminDashboard() {
   }
 
   const graphData = generateGraphData(dashboardData);
-  const activityLog = generateActivityLog(dashboardData);
+  const activityLog = generateActivityLog(dashboardData).slice(0, 3);
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       <AdminSidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
-      <div className="flex-1 lg:ml-64 p-4 lg:p-8 transition-all duration-300">
+      <div className="flex-1 p-2 sm:p-4 lg:p-6 xl:ml-64 transition-all duration-300 max-w-full overflow-x-hidden">
         <button
-          className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"
+          className="lg:hidden mb-2 sm:mb-4 p-2 bg-gray-800 text-white rounded-md"
           onClick={() => setIsSidebarOpen(true)}
         >
-          <RiMenu2Line className="h-6 w-6" />
+          <RiMenu2Line className="h-5 sm:h-6 w-5 sm:w-6" />
         </button>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 dark:text-gray-100">
           Admin Dashboard
         </h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <Users className="h-6 w-6 text-blue-600" />
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Agents
-                </h3>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 mb-4 sm:mb-6">
+            <Card className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[80px] sm:min-h-[100px]">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 sm:h-6 w-5 sm:w-6 text-blue-500" />
+                  <CardTitle className="text-sm sm:text-lg">
+                    Total Agents
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="p-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {dashboardData.stats.totalAgents}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <Users className="h-6 w-6 text-green-600" />
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Users
-                </h3>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[80px] sm:min-h-[100px]">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <Users className="h-5 sm:h-6 w-5 sm:w-6 text-green-500" />
+                  <CardTitle className="text-sm sm:text-lg">
+                    Total Users
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="p-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                   {dashboardData.stats.totalUsers}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="flex items-center p-4">
-              <TbCurrencyNaira className="h-6 w-6 text-yellow-600" />
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Agent Earnings
-                </h3>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[80px] sm:min-h-[100px]">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <TbCurrencyNaira className="h-5 sm:h-6 w-5 sm:w-6 text-yellow-500" />
+                  <CardTitle className="text-sm sm:text-lg">
+                    Total Earnings
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="p-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
                   ₦{dashboardData.stats.totalAgentEarnings.toLocaleString()}
-                </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-white dark:bg-gray-800 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[80px] sm:min-h-[100px]">
+              <CardHeader>
+                <div className="flex items-center space-x-2">
+                  <CreditCard className="h-5 sm:h-6 w-5 sm:w-6 text-red-500" />
+                  <CardTitle className="text-sm sm:text-lg">
+                    Total Withdrawals
+                  </CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="p-2 text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100">
+                  ₦{dashboardData.stats.totalWithdrawals.toLocaleString()}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          {/* <Card className="mb-4 sm:mb-6">
+            <CardHeader>
+              <CardTitle>Platform Growth Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px] sm:h-[300px] md:h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={graphData}
+                    margin={{ top: 10, right: 20, left: 10, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#9ca3af"
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="#9ca3af" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgb(31 41 55 / 0.9)",
+                        border: "none",
+                        borderRadius: "8px",
+                        color: "#f3f4f6",
+                      }}
+                      itemStyle={{ color: "#f3f4f6" }}
+                    />
+                    <Legend wrapperStyle={{ color: "#9ca3af" }} />
+                    <Line
+                      type="monotone"
+                      dataKey="agents"
+                      stroke="#8884d8"
+                      name="Total Agents"
+                      isAnimationActive={true}
+                      animationDuration={1500}
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="users"
+                      stroke="#82ca9d"
+                      name="Total Users"
+                      isAnimationActive={true}
+                      animationDuration={1500}
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="earnings"
+                      stroke="#ffc658"
+                      name="Total Earnings (₦)"
+                      isAnimationActive={true}
+                      animationDuration={1500}
+                      strokeWidth={2}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="withdrawals"
+                      stroke="#ff7300"
+                      name="Total Withdrawals (₦)"
+                      isAnimationActive={true}
+                      animationDuration={1500}
+                      strokeWidth={2}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </CardContent>
+          </Card> */}
+          {/* <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Agents List</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dashboardData.stats.agents.map((agent) => (
+                    <TableRow key={agent.id}>
+                      <TableCell>{agent.id}</TableCell>
+                      <TableCell>{agent.fullname}</TableCell>
+                      <TableCell>{agent.email}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
           </Card>
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Users List</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Full Name</TableHead>
+                    <TableHead>Email</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {dashboardData.stats.users.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>{user.id}</TableCell>
+                      <TableCell>{user.fullname}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card> */}
           <Card>
-            <CardContent className="flex items-center p-4">
-              <CreditCard className="h-6 w-6 text-red-600" />
-              <div className="ml-4">
-                <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Withdrawals
-                </h3>
-                <p className="text-2xl font-bold text-gray-800 dark:text-gray-100">
-                  ₦{dashboardData.stats.totalWithdrawals.toLocaleString()}
-                </p>
+            <CardHeader>
+              <CardTitle>Recent Activity</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Action</TableHead>
+                      <TableHead>User</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {activityLog.map((log) => (
+                      <Dialog key={log.id}>
+                        <DialogTrigger asChild>
+                          <TableRow
+                            className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => setSelectedLog(log)}
+                          >
+                            <TableCell>{log.action}</TableCell>
+                            <TableCell>{log.user}</TableCell>
+                            <TableCell>{log.date}</TableCell>
+                          </TableRow>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Activity Details</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-2">
+                            <p>
+                              <strong>Action:</strong> {log.action}
+                            </p>
+                            <p>
+                              <strong>User:</strong> {log.user}
+                            </p>
+                            <p>
+                              <strong>Date:</strong> {log.date}
+                            </p>
+                            <p>
+                              <strong>Details:</strong> {log.details || "-"}
+                            </p>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </CardContent>
           </Card>
         </div>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Platform Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[400px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart
-                  data={graphData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                  <XAxis dataKey="month" stroke="#9ca3af" />
-                  <YAxis stroke="#9ca3af" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "rgb(31 41 55 / 0.9)",
-                      border: "none",
-                      borderRadius: "8px",
-                      color: "#f3f4f6",
-                    }}
-                    itemStyle={{ color: "#f3f4f6" }}
-                  />
-                  <Legend wrapperStyle={{ color: "#9ca3af" }} />
-                  <Line
-                    type="monotone"
-                    dataKey="agents"
-                    stroke="#8884d8"
-                    name="Total Agents"
-                    isAnimationActive={true}
-                    animationDuration={1000}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="#82ca9d"
-                    name="Total Users"
-                    isAnimationActive={true}
-                    animationDuration={1000}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="earnings"
-                    stroke="#ffc658"
-                    name="Total Earnings (₦)"
-                    isAnimationActive={true}
-                    animationDuration={1000}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="withdrawals"
-                    stroke="#ff7300"
-                    name="Total Withdrawals (₦)"
-                    isAnimationActive={true}
-                    animationDuration={1000}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Agents List</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Email</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dashboardData.stats.agents.map((agent) => (
-                  <TableRow key={agent.id}>
-                    <TableCell>{agent.id}</TableCell>
-                    <TableCell>{agent.fullname}</TableCell>
-                    <TableCell>{agent.email}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Users List</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Email</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dashboardData.stats.users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>{user.id}</TableCell>
-                    <TableCell>{user.fullname}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Details</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {activityLog.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>{log.action}</TableCell>
-                    <TableCell>{log.user}</TableCell>
-                    <TableCell>{log.date}</TableCell>
-                    <TableCell>{log.details || "-"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

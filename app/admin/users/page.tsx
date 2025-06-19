@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { RiMenu2Line, RiSearchLine } from "react-icons/ri";
 import { toast } from "react-hot-toast";
 import {
@@ -25,11 +24,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Toaster } from "react-hot-toast";
 
 interface User {
   id: string;
   fullname: string;
   email: string;
+  phoneNumber: string;
+  track?: string;
 }
 
 interface DashboardData {
@@ -100,44 +102,6 @@ export default function ManageUsers() {
     fetchDashboardData();
   }, [router]);
 
-  const handleDeactivate = async (userId: string) => {
-    try {
-      const token = localStorage.getItem("rbn_admin_token");
-      if (!token) {
-        throw new Error("No authentication token found.");
-      }
-
-      // Placeholder endpoint; replace with actual API
-      const apiBaseUrl =
-        process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
-        "https://rbn.bookbank.com.ng/api/v1";
-      const endpoint = `${apiBaseUrl}/admin/users/${userId}/deactivate`;
-
-      const response = await fetch(endpoint, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || `HTTP ${response.status}`);
-      }
-
-      toast.success(`User ${userId} deactivated successfully!`, {
-        duration: 3000,
-        position: "top-right",
-      });
-    } catch (err: any) {
-      toast.error(err.message || "Failed to deactivate user.", {
-        duration: 5000,
-        position: "top-right",
-      });
-    }
-  };
-
   if (isLoading || !dashboardData) {
     return (
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 justify-center items-center">
@@ -149,7 +113,8 @@ export default function ManageUsers() {
   const filteredUsers = dashboardData.stats.users.filter(
     (user) =>
       user.fullname.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (user.phoneNumber && user.phoneNumber.includes(searchQuery))
   );
 
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -168,72 +133,84 @@ export default function ManageUsers() {
         <button
           className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"
           onClick={() => setIsSidebarOpen(true)}
+          aria-label="Open sidebar"
         >
           <RiMenu2Line className="h-6 w-6" />
         </button>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
           User Management
         </h1>
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle>Users</CardTitle>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <CardTitle>Users</CardTitle>
+              <div className="relative w-full md:w-auto md:min-w-[300px]">
                 <RiSearchLine className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <Input
-                  placeholder="Search users by name or email..."
+                  placeholder="Search by name, email or phone..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 w-full"
+                  aria-label="Search users"
                 />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             {paginatedUsers.length > 0 ? (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Avatar</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Full Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
+              <>
+                <div className="hidden sm:block overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Full Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Phone Number
+                        </TableHead>
+                        <TableHead>Track</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">
+                            {user.fullname}
+                          </TableCell>
+                          <TableCell className="truncate max-w-[150px] md:max-w-[250px]">
+                            {user.email}
+                          </TableCell>
+                          <TableCell>{user.phoneNumber || "N/A"}</TableCell>
+                          <TableCell>{user.track || "N/A"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="block sm:hidden space-y-4">
                   {paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>
-                        <Avatar>
-                          <AvatarFallback>
-                            {user.fullname
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
-                              .toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>{user.id}</TableCell>
-                      <TableCell>{user.fullname}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeactivate(user.id)}
-                        >
-                          Deactivate
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                    <Card key={user.id} className="p-4">
+                      <div className="flex flex-col gap-2">
+                        <p className="font-semibold text-sm">
+                          Name: {user.fullname}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          Email: {user.email}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Phone: {user.phoneNumber || "N/A"}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Track: {user.track || "N/A"}
+                        </p>
+                      </div>
+                    </Card>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </>
             ) : (
-              <p className="text-gray-600 dark:text-gray-400">
-                No users found.
+              <p className="text-gray-600 dark:text-gray-400 py-4 text-center">
+                No users found matching your search.
               </p>
             )}
             {totalPages > 1 && (
@@ -282,6 +259,17 @@ export default function ManageUsers() {
           </CardContent>
         </Card>
       </div>
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          className: "bg-gray-800 text-white",
+          duration: 5000,
+          style: {
+            fontSize: "14px",
+          },
+        }}
+      />
     </div>
   );
 }

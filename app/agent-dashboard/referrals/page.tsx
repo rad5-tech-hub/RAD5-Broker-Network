@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import Sidebar from "@/components/Sidebar";
+import ReferralLinkSection from "@/components/ReferralLinkSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -12,13 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { RiMenu2Line } from "react-icons/ri";
 import {
   FaTwitter,
@@ -26,14 +21,41 @@ import {
   FaFacebook,
   FaLinkedin,
   FaTelegram,
-  FaInstagram,
   FaEnvelope,
   FaShareAlt,
 } from "react-icons/fa";
-import { Copy } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Toaster } from "react-hot-toast";
+
+interface ReferredUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  track: string;
+  paymentStatus: string;
+  createdAt: string;
+}
+
+interface Transaction {
+  month: string;
+  referrals: number;
+  withdrawals: number;
+  earnings: number;
+}
 
 interface DashboardResponse {
   agentId: string;
+  message: string;
+  agent: {
+    fullName: string;
+    profileImage: string;
+    sharableLink: string;
+  };
   stats: {
     totalEarnings: number;
     totalWithdrawals: number;
@@ -41,23 +63,8 @@ interface DashboardResponse {
     transactionCount: number;
     currentPage: number;
     totalPages: number;
-    transactions: Array<{
-      month: string;
-      referrals: number;
-      withdrawals: number;
-      earnings: number;
-    }>;
-    referrals?: Array<{
-      userId: string;
-      date: string;
-      status: "Active" | "Pending";
-    }>;
-  };
-  message: string;
-  agent: {
-    fullName: string;
-    profileImage: string;
-    sharableLink: string;
+    transactions: Transaction[];
+    referredUsers: ReferredUser[];
   };
 }
 
@@ -72,7 +79,6 @@ export default function ReferralsPage() {
     null
   );
   const [loading, setLoading] = useState(true);
-  const [referralLink, setReferralLink] = useState<string>("");
 
   useEffect(() => {
     let mounted = true;
@@ -84,9 +90,6 @@ export default function ReferralsPage() {
         const apiBaseUrl =
           process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
           "https://rbn.bookbank.com.ng/api/v1";
-        const baseUrl =
-          process.env.NEXT_PUBLIC_RBN_BASE_URL ||
-          "https://rad5brokersnetwork.com";
         const token = localStorage.getItem("rbn_token");
         if (!token) {
           throw new Error("No authentication token found. Please sign in.");
@@ -131,18 +134,6 @@ export default function ReferralsPage() {
         const data: DashboardResponse = result as DashboardResponse;
         console.log("API Response:", data);
 
-        const storedReferralLink = localStorage.getItem("rbn_referral_link");
-        const newReferralLink =
-          storedReferralLink ||
-          (data.agent.sharableLink
-            ? `${baseUrl}/ref/${data.agent.sharableLink}`
-            : `${baseUrl}/ref/${data.agentId}`);
-        setReferralLink(newReferralLink);
-        if (!storedReferralLink && data.agent.sharableLink) {
-          localStorage.setItem("rbn_referral_link", newReferralLink);
-          console.log("Set referral link:", newReferralLink);
-        }
-
         if (mounted) {
           setDashboardData(data);
           toast.success(data.message || "Referrals data loaded successfully!", {
@@ -171,26 +162,54 @@ export default function ReferralsPage() {
     };
   }, []);
 
-  const handleCopyLink = async () => {
-    if (referralLink) {
-      try {
-        await navigator.clipboard.writeText(referralLink);
-        toast.success("Referral link copied to clipboard!", { duration: 3000 });
-      } catch (err) {
-        console.error("Copy error:", err);
-        toast.error("Failed to copy link.", { duration: 5000 });
+  useEffect(() => {
+    // Log window size, card, and table dimensions for debugging
+    const handleResize = () => {
+      console.log("Window size:", {
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      const cards = document.querySelectorAll(
+        ".card"
+      ) as NodeListOf<HTMLElement>;
+      cards.forEach((card, index) => {
+        console.log(`Card ${index} dimensions:`, {
+          width: card.clientWidth,
+          offsetWidth: card.offsetWidth,
+          scrollWidth: card.scrollWidth,
+        });
+      });
+      const table = document.querySelector("table") as HTMLElement | null;
+      if (table) {
+        console.log("Table dimensions:", {
+          width: table.clientWidth,
+          offsetWidth: table.offsetWidth,
+          scrollWidth: table.scrollWidth,
+        });
       }
-    } else {
-      toast.error("No referral link available.", { duration: 5000 });
-    }
-  };
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [dashboardData]);
 
   const handleShare = async (platform: string) => {
+    const baseUrl =
+      process.env.NEXT_PUBLIC_RBN_BASE_URL ||
+      "https://rad-5-broker-network.vercel.app";
+    const referralLink = dashboardData?.agent.sharableLink
+      ? `${baseUrl}/register-agent/${dashboardData.agent.sharableLink}`
+      : "";
     const tagline =
       localStorage.getItem("userReferralTagline") ||
       "Join RBN and earn rewards!";
     const message = `${tagline} ${referralLink}`;
     let url = "";
+
+    if (!referralLink) {
+      toast.error("No referral link available.", { duration: 5000 });
+      return;
+    }
 
     switch (platform) {
       case "twitter":
@@ -245,7 +264,11 @@ export default function ReferralsPage() {
     toast.success(`Shared to ${platform}!`, { duration: 3000 });
   };
 
-  const referrals = dashboardData?.stats.referrals || [];
+  const referredUsers = dashboardData?.stats.referredUsers || [];
+
+  // Debugging logs
+  console.log("dashboardData:", dashboardData);
+  console.log("referredUsers:", referredUsers);
 
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
@@ -253,35 +276,38 @@ export default function ReferralsPage() {
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
-      <div className="flex-1 lg:ml-64 p-4 lg:p-8 transition-all duration-300">
+      <div className="flex-1 p-2 sm:p-4 md:p-6 lg:ml-64 max-w-full min-w-[300px] mx-auto transition-all duration-300">
         <button
-          className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"
+          className="lg:hidden mb-2 p-2 bg-gray-800 text-white rounded-md min-w-10 min-h-10"
           onClick={() => setIsSidebarOpen(true)}
+          aria-label="Toggle sidebar"
         >
           <RiMenu2Line className="h-6 w-6" />
         </button>
-        <h1 className="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 dark:text-gray-100">
           Referrals
         </h1>
         {loading ? (
-          <Card className="flex justify-center items-center p-6">
+          <Card className="flex justify-center items-center p-4 sm:p-6 w-full box-sizing-border-box card">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 dark:border-blue-400"></div>
-            <span className="ml-2 text-gray-600 dark:text-gray-300">
+            <span className="ml-2 text-gray-600 dark:text-gray-300 text-sm">
               Loading referrals data...
             </span>
           </Card>
         ) : (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Card>
+          <div className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="w-full max-w-full overflow-hidden box-sizing-border-box card">
                 <CardHeader>
-                  <CardTitle>Total Referrals</CardTitle>
+                  <CardTitle className="text-base sm:text-lg md:text-xl">
+                    Total Referrals
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  <p className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-600 dark:text-blue-400">
                     {dashboardData?.stats.totalReferrals || 0}
                   </p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">
                     Your unique referral ID:{" "}
                     {dashboardData?.agent.sharableLink ||
                       dashboardData?.agentId ||
@@ -289,98 +315,97 @@ export default function ReferralsPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="w-full max-w-full overflow-hidden box-sizing-border-box card">
                 <CardHeader>
-                  <CardTitle>Your Referral Link</CardTitle>
+                  <CardTitle className="text-base sm:text-lg md:text-xl">
+                    Your Referral Link
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      value={referralLink}
-                      readOnly
-                      className="flex-1"
-                      placeholder="Generating referral link..."
-                    />
-                    <Button
-                      onClick={handleCopyLink}
-                      aria-label="Copy referral link"
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <ReferralLinkSection
+                    sharableLink={dashboardData?.agent.sharableLink}
+                  />
                   <div className="mt-4">
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full flex items-center justify-center"
+                          className="w-full flex items-center justify-center min-h-9 sm:min-h-10 text-sm sm:text-base transition-all duration-200"
+                          aria-label="Share referral link"
                         >
                           <FaShareAlt className="mr-2 h-4 w-4" /> Share Link
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-64">
-                        <div className="grid grid-cols-3 gap-2">
+                      <PopoverContent className="w-56 sm:w-64 transition-all duration-200">
+                        <div className="grid grid-cols-3 gap-1 sm:gap-2">
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("twitter")}
                             title="Share on X"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share on X"
                           >
-                            <FaTwitter className="h-6 w-6 text-blue-400" />
+                            <FaTwitter className="h-5 w-5 sm:h-6 sm:w-6 text-blue-400" />
                             <span className="text-xs mt-1">X</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("whatsapp")}
                             title="Share on WhatsApp"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share on WhatsApp"
                           >
-                            <FaWhatsapp className="h-6 w-6 text-green-500" />
+                            <FaWhatsapp className="h-5 w-5 sm:h-6 sm:w-6 text-green-500" />
                             <span className="text-xs mt-1">WhatsApp</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("facebook")}
                             title="Share on Facebook"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share on Facebook"
                           >
-                            <FaFacebook className="h-6 w-6 text-blue-600" />
+                            <FaFacebook className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
                             <span className="text-xs mt-1">Facebook</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("linkedin")}
                             title="Share on LinkedIn"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share on LinkedIn"
                           >
-                            <FaLinkedin className="h-6 w-6 text-blue-700" />
+                            <FaLinkedin className="h-5 w-5 sm:h-6 sm:w-6 text-blue-700" />
                             <span className="text-xs mt-1">LinkedIn</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("telegram")}
                             title="Share on Telegram"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share on Telegram"
                           >
-                            <FaTelegram className="h-6 w-6 text-blue-500" />
+                            <FaTelegram className="h-5 w-5 sm:h-6 sm:w-6 text-blue-500" />
                             <span className="text-xs mt-1">Telegram</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("email")}
                             title="Share via Email"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share via Email"
                           >
-                            <FaEnvelope className="h-6 w-6 text-gray-500" />
+                            <FaEnvelope className="h-5 w-5 sm:h-6 sm:w-6 text-gray-500" />
                             <span className="text-xs mt-1">Email</span>
                           </Button>
                           <Button
                             variant="ghost"
                             onClick={() => handleShare("native")}
                             title="Share via Native App"
-                            className="flex flex-col items-center"
+                            className="flex flex-col items-center min-h-10 sm:min-h-12 text-xs sm:text-sm"
+                            aria-label="Share via Native App"
                           >
-                            <FaShareAlt className="h-6 w-6 text-gray-600" />
+                            <FaShareAlt className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
                             <span className="text-xs mt-1">Native</span>
                           </Button>
                         </div>
@@ -393,47 +418,129 @@ export default function ReferralsPage() {
                 </CardContent>
               </Card>
             </div>
-            <Card>
+            <Card className="w-full max-w-full overflow-hidden box-sizing-border-box card">
               <CardHeader>
-                <CardTitle>Referral Activity</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl">
+                  Referral Activity
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                {referrals.length ? (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="text-left">User ID</TableHead>
-                          <TableHead className="text-left">Date</TableHead>
-                          <TableHead className="text-right">Status</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {referrals.map((referral, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="text-left">
-                              {referral.userId}
-                            </TableCell>
-                            <TableCell className="text-left">
-                              {referral.date}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {referral.status}
-                            </TableCell>
+                {referredUsers.length > 0 ? (
+                  <>
+                    <div className="hidden sm:block overflow-x-auto w-full touch-action-pan-x">
+                      <Table className="w-full max-w-full">
+                        <TableHeader className="sticky top-0 bg-gray-50 dark:bg-gray-800 z-10 shadow-sm">
+                          <TableRow>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[50px] w-auto">
+                              S/N
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[80px] w-auto">
+                              Name
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[80px] w-auto">
+                              Email
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[80px] w-auto">
+                              Phone
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[60px] w-auto">
+                              Track
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[80px] w-auto">
+                              Payment Status
+                            </TableHead>
+                            <TableHead className="text-left text-sm px-2 sm:px-4 py-2 min-w-[60px] w-auto">
+                              Joined
+                            </TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
+                        </TableHeader>
+                        <TableBody>
+                          {referredUsers.map((user, index) => (
+                            <TableRow
+                              key={user.id}
+                              className="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-150"
+                            >
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 min-w-[50px]">
+                                {index + 1}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[80px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {user.fullName}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[120px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {user.email}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[80px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {user.phoneNumber}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[60px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {user.track || "N/A"}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[80px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {user.paymentStatus || "N/A"}
+                              </TableCell>
+                              <TableCell className="text-sm px-2 sm:px-4 py-2 max-w-[60px] overflow-ellipsis whitespace-nowrap sm:truncate">
+                                {new Date(user.createdAt).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    <div className="block sm:hidden space-y-4">
+                      {referredUsers.map((user, index) => (
+                        <Card key={user.id} className="p-4">
+                          <div className="flex flex-col gap-2">
+                            <p className="font-semibold text-sm">
+                              S/N: {index + 1}
+                            </p>
+                            <p className="font-semibold text-sm">
+                              Name: {user.fullName}
+                            </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                              Email: {user.email}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Phone: {user.phoneNumber}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Track: {user.track || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Payment Status: {user.paymentStatus || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Joined:{" "}
+                              {new Date(user.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              )}
+                            </p>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </>
                 ) : (
-                  <p className="text-center text-gray-500 dark:text-gray-400">
-                    No referrals found.
+                  <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
+                    No referred users found.
                   </p>
                 )}
               </CardContent>
             </Card>
           </div>
         )}
+        <Toaster position="top-right" />
       </div>
     </div>
   );

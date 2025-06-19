@@ -490,7 +490,7 @@ export default function AdminSignUpPage() {
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
                 Already have an admin account?{" "}
                 <Link
-                  href="/admin/signin"
+                  href="/admin"
                   className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
                 >
                   Sign In
