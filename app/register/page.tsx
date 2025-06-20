@@ -2,8 +2,6 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter, useParams } from "next/navigation";
-
-// import { useRouter as NextRouter } from "next/router";
 import { toast, Toaster } from "react-hot-toast";
 import {
   CardTitle,
@@ -52,11 +50,9 @@ interface ErrorResponse {
 }
 
 export default function RegisterPage() {
-  // const router = useRouter();
-  //   const { id } = useParams();
-  //  console.log(useParams)
-
-  //   console.log(id);
+  const router = useRouter();
+  const { id } = useParams();
+  console.log(id);
 
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
@@ -65,7 +61,6 @@ export default function RegisterPage() {
     track: "",
   });
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const [phoneErrors, setPhoneErrors] = useState<string[]>([]);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
 
@@ -150,7 +145,7 @@ export default function RegisterPage() {
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
-      const endpoint = `${apiBaseUrl}/user/register/`;
+      const endpoint = `${apiBaseUrl}/user/register/${id}`;
       console.log("Submitting registration to:", endpoint);
 
       const response = await fetch(endpoint, {
@@ -193,7 +188,6 @@ export default function RegisterPage() {
         phoneNumber: "",
         track: "",
       });
-      setShowModal(true);
       toast.success(successResult.message || "Registration successful!", {
         duration: 3000,
         position: "top-right",
@@ -212,26 +206,6 @@ export default function RegisterPage() {
   return (
     <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900">
       <Toaster position="top-right" />
-      {showModal && (
-        <div className="fixed container px-[5vw] mx-auto inset-0 bg-black/60 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">
-              Success!
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
-              Registration successful! Start exploring RAD5 Brokers Network.
-            </p>
-            <div className="flex justify-end space-x-4">
-              <Button
-                onClick={() => setShowModal(false)}
-                className="bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
       <form
         className="container px-4 sm:px-6 lg:px-8 mx-auto h-fit"
         onSubmit={handleSubmit}
@@ -418,10 +392,89 @@ export default function RegisterPage() {
                 ) : null}
                 {loading ? "Registering..." : "Register"}
               </Button>
+              <div className="text-center text-sm text-gray-600 dark:text-gray-300">
+                Already have an account?{" "}
+                <Link
+                  href="/signin"
+                  className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                >
+                  Sign In
+                </Link>
+              </div>
             </CardFooter>
           </div>
         </div>
       </form>
+
+      {/* Success Modal */}
+      {loading === false &&
+        formData.fullName &&
+        formData.email &&
+        formData.phoneNumber &&
+        formData.track && (
+          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+            <div className="bg-gradient-to-br from-green-100 via-white to-green-200 dark:from-green-900 dark:via-gray-800 dark:to-green-900 p-6 rounded-xl shadow-2xl max-w-md w-full text-center space-y-4">
+              <h2 className="text-3xl font-bold text-green-800 dark:text-green-200">
+                Congratulations!
+              </h2>
+              <p className="text-gray-700 dark:text-gray-300">
+                You’ve successfully registered with RAD5 Brokers Network! Expect
+                updates regarding your journey via your email (
+                <strong>{formData.email}</strong>) or phone (
+                <strong>{formData.phoneNumber}</strong>). Feel free to visit us
+                at <strong>No.7 Factory Rd, 3rd Floor</strong> for more
+                assistance.
+              </p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Explore more at{" "}
+                <a
+                  href="https://rad5.com.ng/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline"
+                >
+                  https://rad5.com.ng/
+                </a>
+              </p>
+              <Button
+                onClick={() => router.push("https://rad5.com.ng/")}
+                className="bg-green-600 text-white hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 mt-4 px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105"
+              >
+                OK
+              </Button>
+            </div>
+          </div>
+        )}
     </div>
   );
 }
+
+// export const metadata = {
+//   title: "Register | RAD5 Brokers Network",
+//   description:
+//     "Join the RAD5 Brokers Network by registering today. Choose your tech track and start earning commissions by referring students to RAD5 Tech Hub programs.",
+//   openGraph: {
+//     title: "Register | RAD5 Brokers Network",
+//     description:
+//       "Join the RAD5 Brokers Network by registering today. Choose your tech track and start earning commissions by referring students to RAD5 Tech Hub programs.",
+//     url: "https://rad-5-broker-network.vercel.app/register/agent/chibuike-christian-9490-118564e1",
+//     siteName: "RAD5 Brokers Network",
+//     images: [
+//       {
+//         url: "https://rad-5-broker-network.vercel.app/rad5hub.png", // Replace with your actual image URL
+//         width: 800,
+//         height: 600,
+//         alt: "RAD5 Brokers Network Registration",
+//       },
+//     ],
+//     locale: "en_US",
+//     type: "website",
+//   },
+//   twitter: {
+//     card: "summary_large_image",
+//     title: "Register | RAD5 Brokers Network",
+//     description:
+//       "Join the RAD5 Brokers Network by registering today. Choose your tech track and start earning commissions by referring students to RAD5 Tech Hub programs.",
+//     images: ["https://rad-5-broker-network.vercel.app/rad5hub.png"], // Replace with your actual image URL
+//   },
+// };
