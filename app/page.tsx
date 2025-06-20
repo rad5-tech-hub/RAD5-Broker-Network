@@ -24,6 +24,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -41,9 +42,11 @@ interface Testimonial {
 }
 
 interface Program {
+  id: number;
   name: string;
   duration: string;
   price: number;
+  abbreviation: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -51,7 +54,7 @@ const testimonials: Testimonial[] = [
     name: "Chinedu O.",
     role: "RBN Ambassador",
     quote:
-      "RBN made it easy to earn by referring students to RAD5’s web dev course. I’ve earned over $500!",
+      "RBN made it easy to earn by referring students to RAD5’s web dev course. I’ve earned over ₦125,000!",
   },
   {
     name: "Fatima B.",
@@ -68,30 +71,68 @@ const testimonials: Testimonial[] = [
 ];
 
 const programs: Program[] = [
-  { name: "Digital Marketing", duration: "8 weeks", price: 800 },
-  { name: "Frontend Web Development", duration: "12 weeks", price: 1200 },
-  { name: "Data Analytics", duration: "10 weeks", price: 1000 },
-  { name: "UI/UX Design", duration: "8 weeks", price: 900 },
-  { name: "Mobile App Development", duration: "12 weeks", price: 1300 },
+  {
+    id: 1,
+    name: "Frontend Web Development",
+    duration: "6 months",
+    price: 250000,
+    abbreviation: "Frontend Web Dev",
+  },
+  {
+    id: 2,
+    name: "Data Analytics",
+    duration: "4 months",
+    price: 250000,
+    abbreviation: "Data Analytics",
+  },
+  {
+    id: 3,
+    name: "UI/UX Design",
+    duration: "4 months",
+    price: 200000,
+    abbreviation: "UI/UX Design",
+  },
+  {
+    id: 4,
+    name: "Digital Marketing",
+    duration: "4 months",
+    price: 200000,
+    abbreviation: "Digital Mktg",
+  },
+  {
+    id: 5,
+    name: "Data Analytics Virtual Class",
+    duration: "4 months",
+    price: 200000,
+    abbreviation: "Data Analytics Virt",
+  },
+  {
+    id: 6,
+    name: "Social Media Management",
+    duration: "2 months",
+    price: 100000,
+    abbreviation: "Social Media Mgmt",
+  },
 ];
 
 const stats: { label: string; value: number }[] = [
   { label: "Ambassadors", value: 5000 },
   { label: "Referrals", value: 20000 },
-  { label: "Commissions Paid", value: 500000 },
+  { label: "Commissions Paid (₦)", value: 50000000 },
 ];
 
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const [selectedProgram, setSelectedProgram] = useState("1200");
-  const [commission, setCommission] = useState(120);
+  const [selectedProgramId, setSelectedProgramId] = useState(1); // Default to id 1 (Frontend Web Development)
+  const [selectedProgramName, setSelectedProgramName] =
+    useState("Frontend Web Dev");
+  const [commission, setCommission] = useState(12500);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  // Define useInView for the stats section
   const { ref, inView } = useInView({
-    triggerOnce: true, // Only trigger once
-    threshold: 0.3, // Trigger when 30% of the section is visible
+    triggerOnce: true,
+    threshold: 0.3,
   });
 
   const features: {
@@ -112,7 +153,7 @@ export default function LandingPage() {
     {
       icon: <DollarSign className="h-8 w-8 text-gray-700 dark:text-gray-300" />,
       title: "Earn Instantly",
-      description: "Get 10% commission per enrollment.",
+      description: "Get 5% commission per enrollment.",
     },
   ];
 
@@ -121,14 +162,17 @@ export default function LandingPage() {
     setEmail("");
   };
 
-  const calculateCommission = (price: string) => {
-    const amount = parseInt(price, 10);
-    setCommission(amount * 0.1);
+  const calculateCommission = (price: number) => {
+    setCommission(price * 0.05);
   };
 
   useEffect(() => {
-    calculateCommission(selectedProgram);
-  }, [selectedProgram]);
+    const selectedProgram = programs.find((p) => p.id === selectedProgramId);
+    if (selectedProgram) {
+      setSelectedProgramName(selectedProgram.abbreviation);
+      calculateCommission(selectedProgram.price);
+    }
+  }, [selectedProgramId]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -319,91 +363,101 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="min-h-screen flex items-center justify-center relative z-10 py-12 bg-[url('/bg03.jpg')] bg-cover bg-center">
-        <div
-          className=" absolute inset-0 opacity-10 dark:opacity-20"
-          aria-hidden="true"
-        />
         <motion.div
-          className="container mx-auto px-4 sm:px-6 text-center bg-[#ffff]/20 dark:bg-gray-800/10 backdrop-blur-md rounded-2xl py-8 sm:py-12 max-w-4xl"
+          className="container mx-auto px-4 sm:px-6 text-center bg-transparent py-8 sm:py-12 max-w-4xl relative z-20"
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}
         >
-          <motion.h1
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-black dark:text-gray-100 mb-6"
+          <motion.div
+            className="bg-gradient-to-b from-black/20 to-transparent dark:from-black/30 dark:to-transparent rounded-2xl p-6 sm:p-8 sm:backdrop-blur-xs"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Earn with RAD5 Brokers Network
-          </motion.h1>
-          <motion.p
-            className="text-lg sm:text-xl md:text-2xl text-black dark:text-gray-300 mb-8 max-w-2xl mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-          >
-            Join as an ambassador, refer students to RAD5 Tech Hub’s tech
-            programs, and earn up to 10% commission instantly.
-          </motion.p>
-          <motion.div
-            className="mb-8 max-w-md mx-auto"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 bg-white/20 dark:bg-gray-800/20 rounded-lg p-4">
-              <Select
-                value={selectedProgram}
-                onValueChange={setSelectedProgram}
-                aria-label="Select a program"
-              >
-                <SelectTrigger className="bg-transparent border-none text-gray-800 dark:text-gray-100">
-                  <SelectValue placeholder="Select a program" />
-                </SelectTrigger>
-                <SelectContent>
-                  {programs.map((program) => (
-                    <SelectItem
-                      key={program.name}
-                      value={program.price.toString()}
-                    >
-                      {program.name} (${program.price})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p
-                className="text-gray-700 dark:text-gray-300 font-semibold"
-                aria-live="polite"
-              >
-                Earn ${commission.toFixed(0)}
-              </p>
-            </div>
-          </motion.div>
-          <motion.div
-            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            <Button
-              size="lg"
-              asChild
-              className="bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 transform hover:scale-105 transition-transform"
-              aria-label="Start Earning"
+            <motion.h1
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white dark:text-gray-100 mb-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
             >
-              <Link href="/signup">
-                Start Earning <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="text-gray-700 border-gray-700 hover:bg-gray-200/20 dark:text-gray-300 dark:border-gray-300 dark:hover:bg-gray-700/20 transform hover:scale-105 transition-transform"
-              aria-label="Learn How It Works"
+              Earn with RAD5 Brokers Network
+            </motion.h1>
+            <motion.p
+              className="text-lg sm:text-xl md:text-2xl text-white dark:text-gray-200 mb-8 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <Link href="#features">How It Works</Link>
-            </Button>
+              Join as an ambassador, refer students to RAD5 Tech Hub’s tech
+              programs, and earn up to 5% commission instantly.
+            </motion.p>
+            <motion.div
+              className="mb-8 max-w-md mx-auto"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 bg-white/20 dark:bg-gray-800/20 rounded-lg p-4">
+                <Select
+                  value={selectedProgramId.toString()}
+                  onValueChange={(value) =>
+                    setSelectedProgramId(parseInt(value))
+                  }
+                  aria-label="Select a program"
+                >
+                  <SelectTrigger className="bg-transparent border-none text-white dark:text-gray-100 w-full max-w-xs flex items-center justify-between pr-2">
+                    <span>{selectedProgramName}</span>
+                    <ChevronDown className="h-6 w-6 text-white dark:text-gray-200" />
+                  </SelectTrigger>
+                  <SelectContent
+                    position="popper"
+                    className="w-full max-h-60 overflow-auto bg-white dark:bg-gray-800"
+                  >
+                    {programs.map((program) => (
+                      <SelectItem
+                        key={program.id}
+                        value={program.id.toString()}
+                        className="text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                      >
+                        {program.name} (₦{program.price.toLocaleString()})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p
+                  className="text-white dark:text-gray-200 font-semibold text-right flex-1"
+                  aria-live="polite"
+                >
+                  Earn ₦{commission.toLocaleString()}
+                </p>
+              </div>
+            </motion.div>
+            <motion.div
+              className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+            >
+              <Button
+                size="lg"
+                asChild
+                className="bg-black text-white hover:bg-gray-800 dark:bg-gray-300 dark:text-gray-900 dark:hover:bg-gray-400 transform hover:scale-105 transition-transform"
+                aria-label="Start Earning"
+              >
+                <Link href="/signup">
+                  Start Earning <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white hover:bg-gray-200/20 dark:text-gray-200 dark:border-gray-200 dark:hover:bg-gray-700/20 transform hover:scale-105 transition-transform"
+                aria-label="Learn How It Works"
+              >
+                <Link href="#features">How It Works</Link>
+              </Button>
+            </motion.div>
           </motion.div>
         </motion.div>
       </section>
@@ -455,7 +509,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {programs.map((program, index) => (
               <motion.div
-                key={program.name}
+                key={program.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -472,10 +526,11 @@ export default function LandingPage() {
                       Duration: {program.duration}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Price: ${program.price}
+                      Price: ₦{program.price.toLocaleString()}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">
-                      Earn ${(program.price * 0.1).toFixed(0)} per referral
+                      Earn ₦{(program.price * 0.05).toLocaleString()} per
+                      referral
                     </p>
                   </CardContent>
                 </Card>
@@ -519,10 +574,17 @@ export default function LandingPage() {
                         end={stat.value}
                         duration={2.5}
                         separator=","
-                        suffix="+"
+                        suffix={
+                          stat.label === "Commissions Paid (₦)" ? "" : "+"
+                        }
+                        prefix={
+                          stat.label === "Commissions Paid (₦)" ? "₦" : ""
+                        }
                       />
                     ) : (
-                      "0+"
+                      `${stat.label === "Commissions Paid (₦)" ? "₦" : ""}0${
+                        stat.label === "Commissions Paid (₦)" ? "" : "+"
+                      }`
                     )}
                   </motion.span>
                 </h3>
