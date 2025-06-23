@@ -11,6 +11,8 @@ export default function InfoPage() {
   const searchParams = useSearchParams();
   const agentId = searchParams.get("agentId");
 
+  // Fallback agentId if not provided in the URL
+
   const handleProceed = () => {
     if (agentId) {
       router.push(`/register/agent/${agentId}`);
@@ -100,33 +102,3 @@ export default function InfoPage() {
     </div>
   );
 }
-
-// export const metadata = {
-//   title: "RAD5 Tech Hub Programs | Join Now",
-//   description:
-//     "Discover cutting-edge tech programs at RAD5 Tech Hub, including Frontend Web Development, Data Analytics, and more. Earn 5% commission through the RAD5 Brokers Network.",
-//   openGraph: {
-//     title: "RAD5 Tech Hub Programs | Join Now",
-//     description:
-//       "Discover cutting-edge tech programs at RAD5 Tech Hub, including Frontend Web Development, Data Analytics, and more. Earn 5% commission through the RAD5 Brokers Network.",
-//     url: "https://rad-5-broker-network.vercel.app/",
-//     siteName: "RAD5 Brokers Network",
-//     images: [
-//       {
-//         url: "https://rad-5-broker-network.vercel.app/rad5hub.png", // Replace with your actual image URL
-//         width: 800,
-//         height: 600,
-//         alt: "RAD5 Tech Hub Programs",
-//       },
-//     ],
-//     locale: "en_US",
-//     type: "website",
-//   },
-//   twitter: {
-//     card: "summary_large_image",
-//     title: "RAD5 Tech Hub Programs | Join Now",
-//     description:
-//       "Discover cutting-edge tech programs at RAD5 Tech Hub, including Frontend Web Development, Data Analytics, and more. Earn 5% commission through the RAD5 Brokers Network.",
-//     images: ["https://rad-5-broker-network.vercel.app/rad5hub.png"], // Replace with your actual image URL
-//   },
-// };
