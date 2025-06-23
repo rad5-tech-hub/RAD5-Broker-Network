@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
+
 import {
   CardTitle,
   CardDescription,
@@ -14,21 +16,23 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-export default function SigninForm() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [showPassword, setShowPassword] = useState(false);
+export default function ForgotPasswordForm() {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setEmail(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -36,23 +40,17 @@ export default function SigninForm() {
     setLoading(true);
 
     try {
-      console.log("Sending request to API with payload:", {
-        email: formData.email,
-        password: formData.password,
-      });
+      console.log("Sending request to API with payload:", { email });
 
       const response = await fetch(
-        "https://rbn.bookbank.com.ng/api/v1/agent/login",
+        "https://rbn.bookbank.com.ng/api/v1/agent/forgot-password",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({
-            email: formData.email,
-            password: formData.password,
-          }),
+          body: JSON.stringify({ email }),
         }
       );
 
@@ -65,20 +63,17 @@ export default function SigninForm() {
         const errorMessage =
           data.message ||
           data.error ||
-          `Login failed with status ${response.status}. Please check your credentials.`;
+          `Request failed with status ${response.status}. Please check your email.`;
         throw new Error(errorMessage);
       }
 
-      localStorage.setItem("rbn_token", data.token);
-      toast.success(data.message || "Login successful!", {
+      setIsModalOpen(true);
+      toast.success(data.message || "Password reset link sent!", {
         duration: 3000,
         position: "top-right",
       });
-      setTimeout(() => {
-        router.push("/agent-dashboard");
-      }, 1000);
     } catch (err) {
-      console.error("Login Error:", err);
+      console.error("Error:", err);
       let errorMessage = "Something went wrong. Please try again.";
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -96,6 +91,21 @@ export default function SigninForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleEmailRedirect = () => {
+    const emailDomain = email.split("@")[1];
+    const emailProviders = {
+      "gmail.com": "https://mail.google.com",
+      "yahoo.com": "https://mail.yahoo.com",
+      "outlook.com": "https://outlook.live.com",
+      "hotmail.com": "https://outlook.live.com",
+    };
+    const redirectUrl =
+      emailProviders[emailDomain as keyof typeof emailProviders] ||
+      "https://mail.google.com";
+    window.open(redirectUrl, "_blank");
+    setIsModalOpen(false);
   };
 
   return (
@@ -119,8 +129,8 @@ export default function SigninForm() {
               </Link>
               <h1 className="text-4xl font-bold">Welcome to RBN</h1>
               <p className="text-lg">
-                Sign in to access your RBN ambassador dashboard and start
-                earning commissions.
+                Reset your password to regain access to your RBN ambassador
+                dashboard.
               </p>
             </div>
           </div>
@@ -139,10 +149,10 @@ export default function SigninForm() {
                 />
               </Link>
               <CardTitle className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                Sign In
+                Forgot Password
               </CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-300">
-                Enter your details to access your account
+                Enter your email to receive a password reset link
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 mt-4">
@@ -158,7 +168,7 @@ export default function SigninForm() {
                   name="email"
                   type="email"
                   placeholder="Enter email"
-                  value={formData.email}
+                  value={email}
                   onChange={handleInputChange}
                   required
                   className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
@@ -166,76 +176,54 @@ export default function SigninForm() {
                   disabled={loading}
                 />
               </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="password"
-                  className="text-gray-700 dark:text-gray-200"
-                >
-                  Password
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    required
-                    className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    aria-label="Password"
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                    disabled={loading}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
                 className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-105 transition-transform mt-6"
-                aria-label="Sign In"
+                aria-label="Reset Password"
                 disabled={loading}
               >
-                {loading ? "Signing In..." : "Sign In"}
+                {loading ? "Sending..." : "Reset Password"}
               </Button>
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                <div>
-                  Don't have an account?{" "}
-                  <Link
-                    href="/signup"
-                    className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-                <div>
-                  <Link
-                    href="/forgot-password"
-                    className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
+                Remember your password?{" "}
+                <Link
+                  href="/signin"
+                  className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                >
+                  Sign In
+                </Link>
               </div>
             </CardFooter>
           </div>
         </div>
       </form>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Password Reset Link Sent</DialogTitle>
+            <DialogDescription>
+              A password reset link has been sent to{" "}
+              <span
+                className="text-blue-600 cursor-pointer hover:underline"
+                onClick={handleEmailRedirect}
+              >
+                {email}
+              </span>
+              . Please check your email to reset your password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={handleEmailRedirect}
+              className="bg-blue-600 text-white hover:bg-blue-500"
+            >
+              Go to Email
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

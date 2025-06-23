@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -16,15 +16,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
-export default function SigninForm() {
+export default function ResetPasswordForm() {
   const [formData, setFormData] = useState({
-    email: "",
     password: "",
+    confirmPassword: "",
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
+  const { token } = useParams();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -35,14 +45,23 @@ export default function SigninForm() {
     e.preventDefault();
     setLoading(true);
 
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!", {
+        duration: 5000,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       console.log("Sending request to API with payload:", {
-        email: formData.email,
         password: formData.password,
+        confirmPassword: formData.confirmPassword,
       });
 
       const response = await fetch(
-        "https://rbn.bookbank.com.ng/api/v1/agent/login",
+        `https://rbn.bookbank.com.ng/api/v1/agent/reset-password/${token}`,
         {
           method: "POST",
           headers: {
@@ -50,8 +69,8 @@ export default function SigninForm() {
             Accept: "application/json",
           },
           body: JSON.stringify({
-            email: formData.email,
             password: formData.password,
+            confirmPassword: formData.confirmPassword,
           }),
         }
       );
@@ -65,20 +84,17 @@ export default function SigninForm() {
         const errorMessage =
           data.message ||
           data.error ||
-          `Login failed with status ${response.status}. Please check your credentials.`;
+          `Password reset failed with status ${response.status}. Please try again.`;
         throw new Error(errorMessage);
       }
 
-      localStorage.setItem("rbn_token", data.token);
-      toast.success(data.message || "Login successful!", {
+      setIsModalOpen(true);
+      toast.success(data.message || "Password reset successful!", {
         duration: 3000,
         position: "top-right",
       });
-      setTimeout(() => {
-        router.push("/agent-dashboard");
-      }, 1000);
     } catch (err) {
-      console.error("Login Error:", err);
+      console.error("Reset Password Error:", err);
       let errorMessage = "Something went wrong. Please try again.";
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -96,6 +112,11 @@ export default function SigninForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRedirectToSignIn = () => {
+    setIsModalOpen(false);
+    router.push("/signin");
   };
 
   return (
@@ -119,8 +140,7 @@ export default function SigninForm() {
               </Link>
               <h1 className="text-4xl font-bold">Welcome to RBN</h1>
               <p className="text-lg">
-                Sign in to access your RBN ambassador dashboard and start
-                earning commissions.
+                Reset your password to access your RBN ambassador dashboard.
               </p>
             </div>
           </div>
@@ -139,51 +159,31 @@ export default function SigninForm() {
                 />
               </Link>
               <CardTitle className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-                Sign In
+                Reset Password
               </CardTitle>
               <CardDescription className="text-gray-600 dark:text-gray-300">
-                Enter your details to access your account
+                Enter your new password below
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label
-                  htmlFor="email"
-                  className="text-gray-700 dark:text-gray-200"
-                >
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                  className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                  aria-label="Email"
-                  disabled={loading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
                   htmlFor="password"
                   className="text-gray-700 dark:text-gray-200"
                 >
-                  Password
+                  New Password
                 </Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter password"
+                    placeholder="Enter new password"
                     value={formData.password}
                     onChange={handleInputChange}
                     required
                     className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
-                    aria-label="Password"
+                    aria-label="New Password"
                     disabled={loading}
                   />
                   <button
@@ -203,39 +203,85 @@ export default function SigninForm() {
                   </button>
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label
+                  htmlFor="confirmPassword"
+                  className="text-gray-700 dark:text-gray-200"
+                >
+                  Confirm Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm new password"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                    className="text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600"
+                    aria-label="Confirm Password"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                    disabled={loading}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
                 className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-105 transition-transform mt-6"
-                aria-label="Sign In"
+                aria-label="Reset Password"
                 disabled={loading}
               >
-                {loading ? "Signing In..." : "Sign In"}
+                {loading ? "Resetting..." : "Reset Password"}
               </Button>
               <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                <div>
-                  Don't have an account?{" "}
-                  <Link
-                    href="/signup"
-                    className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    Sign Up
-                  </Link>
-                </div>
-                <div>
-                  <Link
-                    href="/forgot-password"
-                    className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    Forgot Password?
-                  </Link>
-                </div>
+                Remember your password?{" "}
+                <Link
+                  href="/signin"
+                  className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                >
+                  Sign In
+                </Link>
               </div>
             </CardFooter>
           </div>
         </div>
       </form>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Password Reset Successful</DialogTitle>
+            <DialogDescription>
+              Your password has been successfully reset. You can now sign in
+              with your new password.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end mt-4">
+            <Button
+              onClick={handleRedirectToSignIn}
+              className="bg-blue-600 text-white hover:bg-blue-500"
+            >
+              Go to Sign In
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -468,7 +468,7 @@ export default function LandingPage() {
         className="py-16 sm:py-20 container mx-auto px-4 sm:px-6 relative z-10"
       >
         <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-800 dark:text-gray-100 mb-12">
-          Why Join RBN?
+          How It Works
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
           {features.map((feature, index) => (
