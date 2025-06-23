@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -29,6 +29,11 @@ export default function ResetPassword() {
     password: "",
     confirmPassword: "",
   });
+  console.log(useSearchParams());
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get a specific search parameter
+  const globalToken = searchParams[1];
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -61,7 +66,7 @@ export default function ResetPassword() {
       });
 
       const response = await fetch(
-        `https://rbn.bookbank.com.ng/api/v1/agent/reset-password/${token}`,
+        `https://rbn.bookbank.com.ng/api/v1/agent/reset-password/${globalToken}`,
         {
           method: "POST",
           headers: {
