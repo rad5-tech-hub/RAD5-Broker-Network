@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -34,7 +34,8 @@ export default function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const router = useRouter();
-  const { token } = useParams();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -44,6 +45,15 @@ export default function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+
+    if (!token) {
+      toast.error("Invalid or missing reset token.", {
+        duration: 5000,
+        position: "top-right",
+      });
+      setLoading(false);
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match!", {
@@ -246,7 +256,7 @@ export default function ResetPasswordForm() {
                 type="submit"
                 className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-105 transition-transform mt-6"
                 aria-label="Reset Password"
-                disabled={loading}
+                disabled={loading || !token}
               >
                 {loading ? "Resetting..." : "Reset Password"}
               </Button>
