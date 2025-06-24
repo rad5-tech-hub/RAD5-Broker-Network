@@ -32,11 +32,26 @@ interface User {
   email: string;
   phoneNumber: string;
   track?: string;
+  paymentStatus?: string;
+  referredBy?: string;
+}
+
+interface Agent {
+  id: string;
+  fullname: string;
+  email: string;
+  phoneNumber: string;
+  Users: User[];
 }
 
 interface DashboardData {
   stats: {
     users: User[];
+    agents: Agent[];
+    totalAgentEarnings: number;
+    totalAgents: number;
+    totalWithdrawals: number;
+    totalUsers: number;
   };
   message: string;
 }
@@ -62,7 +77,7 @@ export default function ManageUsers() {
         }
 
         const apiBaseUrl =
-          process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+          process.env.NEXT_PUBLIC_API_URL ||
           "https://rbn.bookbank.com.ng/api/v1";
         const endpoint = `${apiBaseUrl}/admin/dashboard`;
 
@@ -81,7 +96,34 @@ export default function ManageUsers() {
         }
 
         const result = await response.json();
-        setDashboardData(result);
+        // Enrich users with referral and payment data from agents
+        const enrichedUsers = result.stats.users.map((user: User) => {
+          const agent = result.stats.agents.find((agent: Agent) =>
+            agent.Users.some((u: User) => u.id === user.id)
+          );
+          let paymentStatus = "N/A";
+          let referredBy = "N/A";
+
+          if (agent) {
+            const referredUser = agent.Users.find(
+              (u: User) => u.id === user.id
+            );
+            if (referredUser) {
+              paymentStatus = referredUser.paymentStatus || "N/A";
+              referredBy = agent.fullname || "N/A";
+            }
+          }
+
+          return {
+            ...user,
+            paymentStatus,
+            referredBy,
+          };
+        });
+        setDashboardData({
+          ...result,
+          stats: { ...result.stats, users: enrichedUsers },
+        });
         toast.success(result.message || "User data loaded successfully!", {
           duration: 3000,
           position: "top-right",
@@ -101,7 +143,6 @@ export default function ManageUsers() {
 
     fetchDashboardData();
   }, [router]);
-
   if (isLoading || !dashboardData) {
     return (
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 justify-center items-center">
@@ -169,6 +210,8 @@ export default function ManageUsers() {
                           Phone Number
                         </TableHead>
                         <TableHead>Track</TableHead>
+                        <TableHead>Referred By</TableHead>
+                        <TableHead>Payment Status</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -182,6 +225,18 @@ export default function ManageUsers() {
                           </TableCell>
                           <TableCell>{user.phoneNumber || "N/A"}</TableCell>
                           <TableCell>{user.track || "N/A"}</TableCell>
+                          <TableCell>{user.referredBy}</TableCell>
+                          <TableCell
+                            className={`font-medium ${
+                              user.paymentStatus === "paid"
+                                ? "text-green-600"
+                                : user.paymentStatus === "unpaid"
+                                ? "text-red-600"
+                                : "text-gray-600"
+                            }`}
+                          >
+                            {user.paymentStatus || "N/A"}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -202,6 +257,20 @@ export default function ManageUsers() {
                         </p>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           Track: {user.track || "N/A"}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Referred By: {user.referredBy}
+                        </p>
+                        <p
+                          className={`text-sm font-medium ${
+                            user.paymentStatus === "paid"
+                              ? "text-green-600"
+                              : user.paymentStatus === "unpaid"
+                              ? "text-red-600"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          Payment Status: {user.paymentStatus || "N/A"}
                         </p>
                       </div>
                     </Card>

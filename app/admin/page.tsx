@@ -306,7 +306,7 @@ export default function AdminSignInPage() {
                 ) : null}
                 {loading ? "Signing In..." : "Sign In"}
               </Button>
-              <div className="text-center text-sm text-gray-600 dark:text-gray-300">
+              {/* <div className="text-center text-sm text-gray-600 dark:text-gray-300">
                 Don't have an admin account?{" "}
                 <Link
                   href="/admin/signup"
@@ -314,7 +314,7 @@ export default function AdminSignInPage() {
                 >
                   Sign Up
                 </Link>
-              </div>
+              </div> */}
             </CardFooter>
           </div>
         </div>

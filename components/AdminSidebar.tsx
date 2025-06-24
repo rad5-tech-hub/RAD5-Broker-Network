@@ -12,11 +12,13 @@ import {
   BarChart2,
   Moon,
   Sun,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
-
+import { useEffect } from "react";
+import { useState } from "react";
 interface AdminSidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
@@ -29,6 +31,11 @@ export default function AdminSidebar({
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     {
@@ -47,21 +54,23 @@ export default function AdminSidebar({
       icon: <Users className="h-5 w-5" />,
     },
     {
+      name: "Create Admin",
+      href: "/admin/create-admin",
+      icon: <UserPlus className="h-5 w-5" />,
+    },
+    {
       name: "Withdrawals",
       href: "/admin/withdrawals",
       icon: <CreditCard className="h-5 w-5" />,
     },
-    // {
-    //   name: "Analytics",
-    //   href: "/admin/analytics",
-    //   icon: <BarChart2 className="h-5 w-5" />,
-    // },
   ];
 
   const handleLogout = () => {
     localStorage.clear();
     router.push("/admin");
   };
+
+  if (!mounted) return null; // Prevent SSR render of theme-dependent components
 
   return (
     <>
@@ -71,14 +80,16 @@ export default function AdminSidebar({
         } lg:translate-x-0 transition-transform duration-300 ease-in-out`}
       >
         <div className="flex flex-col items-center p-4 border-b dark:border-gray-700">
-          <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
-
-          <Link href="/admin/settings" className="mt-2">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src="/default-avatar.png" alt="Admin" />
-              <AvatarFallback>AD</AvatarFallback>
-            </Avatar>
-          </Link>
+          <Image
+            src="/rad5hub.png"
+            alt="RAD5_Logo"
+            width={100}
+            height={100}
+            className="w-auto h-auto"
+          />
+          <h1 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mt-2">
+            Admin Dashboard
+          </h1>
         </div>
         <nav className="p-4">
           <ul className="space-y-2">
@@ -99,11 +110,9 @@ export default function AdminSidebar({
             ))}
           </ul>
         </nav>
-
         <div className="absolute bottom-4 p-4 w-full">
           <div className="p-4">
             <div className="flex items-center justify-between">
-              {/* <span className="text-gray-700 dark:text-gray-200">Theme</span> */}
               <div className="flex items-center space-x-2">
                 <Sun className="h-4 w-4 text-gray-700 dark:text-gray-200" />
                 <Switch
