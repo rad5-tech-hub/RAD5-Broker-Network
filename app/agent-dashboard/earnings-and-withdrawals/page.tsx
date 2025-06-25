@@ -187,6 +187,8 @@ export default function EarningsAndWithdrawals() {
   const [isOtherBank, setIsOtherBank] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const [itemsPerPage] = useState(5); // Number of items per page
 
   // Form setup with dynamic schema based on agent's fullName
   const form = useForm<WithdrawalFormValues>({
@@ -508,6 +510,20 @@ export default function EarningsAndWithdrawals() {
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = allTransactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
+  const totalPages = Math.ceil(allTransactions.length / itemsPerPage);
+
+  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  const nextPage = () =>
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  const prevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1));
+
   // Color mappings for status and type
   const getStatusColor = (status?: string) => {
     switch (status?.toLowerCase()) {
@@ -539,6 +555,11 @@ export default function EarningsAndWithdrawals() {
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        profileImage={
+          dashboardData?.agent.profileImage ?? "/default-avatar.png"
+        }
+        imagePreview={null} // No image upload functionality here, so set to null
+        agentName={dashboardData?.agent.fullName ?? "Agent"}
       />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -840,7 +861,7 @@ export default function EarningsAndWithdrawals() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {allTransactions.map((transaction) => (
+                        {currentTransactions.map((transaction) => (
                           <TableRow
                             key={transaction.id}
                             className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -858,7 +879,7 @@ export default function EarningsAndWithdrawals() {
                             <TableCell className="text-sm px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis line-clamp-2">
                               {transaction.description}
                             </TableCell>
-                            <TableCell className="text-sm px-4 py-2 whitespace-nowrap hidden md:table-cell">
+                            <TableCell className="text-sm px-4 py-2 whitespace-nowrap overflow-hidden text-ellipsis">
                               {transaction.bankName || "N/A"}
                             </TableCell>
                             <TableCell className="text-sm px-4 py-2 whitespace-nowrap">
@@ -886,6 +907,26 @@ export default function EarningsAndWithdrawals() {
                         ))}
                       </TableBody>
                     </Table>
+                    {/* Pagination Controls */}
+                    <div className="flex justify-between items-center mt-4">
+                      <Button
+                        onClick={prevPage}
+                        disabled={currentPage === 1}
+                        variant="outline"
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        onClick={nextPage}
+                        disabled={currentPage === totalPages}
+                        variant="outline"
+                      >
+                        Next
+                      </Button>
+                    </div>
                     {/* Transaction Details Modal */}
                     <Dialog
                       open={!!selectedTransaction}

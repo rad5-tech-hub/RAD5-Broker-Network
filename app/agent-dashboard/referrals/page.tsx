@@ -275,6 +275,11 @@ export default function ReferralsPage() {
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        profileImage={
+          dashboardData?.agent.profileImage ?? "/default-avatar.png"
+        }
+        imagePreview={null} // No image upload functionality here, so set to null
+        agentName={dashboardData?.agent.fullName ?? "Agent"}
       />
       <div className="flex-1 p-2 sm:p-4 md:p-6 lg:ml-64 max-w-full min-w-[300px] mx-auto transition-all duration-300">
         <button

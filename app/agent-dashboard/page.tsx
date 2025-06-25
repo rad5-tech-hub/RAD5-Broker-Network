@@ -143,9 +143,6 @@ export default function Dashboard() {
           throw new Error("Invalid authentication token. Please sign in.");
         }
 
-        const storedReferralLink = localStorage.getItem("rbn_referral_link");
-        const storedSharableLink = localStorage.getItem("rbn_sharable_link");
-
         const response = await fetch(`${apiBaseUrl}/agent/dashboard`, {
           method: "GET",
           headers: {
@@ -166,7 +163,10 @@ export default function Dashboard() {
         }
 
         const data: DashboardResponse = await response.json();
-        const expectedReferralLink = `${baseUrl}/register-agent/${data.agent.sharableLink}`;
+        const expectedReferralLink = `${baseUrl}/register/agent/${data.agent.sharableLink}`; // Correct path
+
+        const storedReferralLink = localStorage.getItem("rbn_referral_link");
+        const storedSharableLink = localStorage.getItem("rbn_sharable_link");
 
         if (
           storedReferralLink &&
@@ -211,7 +211,6 @@ export default function Dashboard() {
       controller.abort();
     };
   }, []);
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -294,9 +293,9 @@ export default function Dashboard() {
       process.env.NEXT_PUBLIC_RBN_BASE_URL ||
       "https://rad-5-broker-network.vercel.app";
     const referralLink = dashboardData?.agent.sharableLink
-      ? `${baseUrl}/register-agent/${dashboardData.agent.sharableLink}`
+      ? `${baseUrl}/register/agent/${dashboardData.agent.sharableLink}`
       : "";
-    const shareText = `Join my referral program and start earning today! ${referralLink}`;
+    const shareText = `Hey! Join my RAD5 Brokers Network referral program and start earning with elite tech training. Use my link: ${referralLink}`;
 
     if (!referralLink) {
       toast.error("Referral link not available.");
@@ -306,7 +305,7 @@ export default function Dashboard() {
     if (!platform && navigator.share) {
       try {
         await navigator.share({
-          title: "Join My Referral Program",
+          title: "Join My RAD5 Referral Program",
           text: shareText,
           url: referralLink,
         });
@@ -326,7 +325,7 @@ export default function Dashboard() {
           shareUrl = `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
           break;
         case "whatsapp":
-          shareUrl = `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`;
+          shareUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
           break;
         case "linkedin":
           shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
@@ -335,12 +334,26 @@ export default function Dashboard() {
           shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
           break;
         case "email":
-          shareUrl = `mailto:?subject=Join%20My%20Referral%20Program&body=${encodedText}%20${encodedUrl}`;
+          shareUrl = `mailto:?subject=Join%20My%20RAD5%20Referral%20Program&body=${encodedText}`;
+          break;
+        case "telegram":
+          shareUrl = `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`;
+          break;
+        case "native":
+          if (navigator.share) {
+            await navigator.share({
+              title: "Join My RAD5 Referral Program",
+              text: shareText,
+              url: referralLink,
+            });
+            toast.success("Shared successfully!");
+            return;
+          }
           break;
         default:
           return;
       }
-      window.open(shareUrl, "_blank");
+      if (shareUrl) window.open(shareUrl, "_blank");
     }
   };
 
@@ -373,7 +386,13 @@ export default function Dashboard() {
       <Sidebar
         isOpen={isSidebarOpen}
         toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        profileImage={
+          dashboardData?.agent.profileImage ?? "/default-avatar.png"
+        }
+        imagePreview={imagePreview}
+        agentName={dashboardData?.agent.fullName ?? "Agent"}
       />
+
       <div className="flex-1 p-4 sm:p-6 lg:p-8 xl:ml-64 transition-all duration-300 max-w-full overflow-x-hidden">
         <button
           className="lg:hidden mb-4 p-2 bg-gray-800 text-white rounded-md"

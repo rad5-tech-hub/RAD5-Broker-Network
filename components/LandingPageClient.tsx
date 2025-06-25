@@ -34,6 +34,8 @@ import { FaLinkedin } from "react-icons/fa";
 import { FaGithub } from "react-icons/fa";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
+import { toast } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 
 interface Testimonial {
   name: string;
@@ -41,12 +43,13 @@ interface Testimonial {
   quote: string;
 }
 
-interface Program {
-  id: number;
-  name: string;
-  duration: string;
+interface Course {
+  id: string;
+  courseName: string;
   price: number;
-  abbreviation: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const testimonials: Testimonial[] = [
@@ -70,51 +73,6 @@ const testimonials: Testimonial[] = [
   },
 ];
 
-const programs: Program[] = [
-  {
-    id: 1,
-    name: "Frontend Web Development",
-    duration: "6 months",
-    price: 250000,
-    abbreviation: "Frontend Web Dev",
-  },
-  {
-    id: 2,
-    name: "Data Analytics",
-    duration: "4 months",
-    price: 250000,
-    abbreviation: "Data Analytics",
-  },
-  {
-    id: 3,
-    name: "UI/UX Design",
-    duration: "4 months",
-    price: 200000,
-    abbreviation: "UI/UX Design",
-  },
-  {
-    id: 4,
-    name: "Digital Marketing",
-    duration: "4 months",
-    price: 200000,
-    abbreviation: "Digital Mktg",
-  },
-  {
-    id: 5,
-    name: "Data Analytics Virtual Class",
-    duration: "4 months",
-    price: 200000,
-    abbreviation: "Data Analytics Virt",
-  },
-  {
-    id: 6,
-    name: "Social Media Management",
-    duration: "2 months",
-    price: 100000,
-    abbreviation: "Social Media Mgmt",
-  },
-];
-
 const stats: { label: string; value: number }[] = [
   { label: "Ambassadors", value: 5000 },
   { label: "Referrals", value: 20000 },
@@ -125,15 +83,16 @@ export default function LandingPageClient() {
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const [selectedProgramId, setSelectedProgramId] = useState(1); // Default to id 1 (Frontend Web Development)
-  const [selectedProgramName, setSelectedProgramName] =
-    useState("Frontend Web Dev");
-  const [commission, setCommission] = useState(12500);
+  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [selectedCourseName, setSelectedCourseName] = useState("");
+  const [commission, setCommission] = useState(0);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { ref, inView } = useInView({
     triggerOnce: true,
     threshold: 0.3,
   });
+  const [isLoading, setIsLoading] = useState(true);
 
   const features: {
     icon: React.ReactNode;
@@ -160,6 +119,7 @@ export default function LandingPageClient() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setEmail("");
+    toast.success("Subscribed successfully!");
   };
 
   const calculateCommission = (price: number) => {
@@ -167,12 +127,47 @@ export default function LandingPageClient() {
   };
 
   useEffect(() => {
-    const selectedProgram = programs.find((p) => p.id === selectedProgramId);
-    if (selectedProgram) {
-      setSelectedProgramName(selectedProgram.abbreviation);
-      calculateCommission(selectedProgram.price);
+    const fetchCourses = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          "https://rbn.bookbank.com.ng/api/v1/course/courses",
+          {
+            headers: {
+              Accept: "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const result = await response.json();
+        setCourses(result.courses || []);
+        if (result.courses.length > 0) {
+          const firstCourse = result.courses[0];
+          setSelectedCourseId(firstCourse.id);
+          setSelectedCourseName(firstCourse.courseName);
+          calculateCommission(firstCourse.price);
+        }
+      } catch (err: any) {
+        console.error("Error fetching courses:", err);
+        toast.error(err.message || "Failed to load courses.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCourses();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCourseId && courses.length > 0) {
+      const course = courses.find((c) => c.id === selectedCourseId);
+      if (course) {
+        setSelectedCourseName(course.courseName);
+        calculateCommission(course.price);
+      }
     }
-  }, [selectedProgramId]);
+  }, [selectedCourseId, courses]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -188,8 +183,16 @@ export default function LandingPageClient() {
       (prev) => (prev - 1 + testimonials.length) % testimonials.length
     );
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#ffff]/20 dark:bg-gray-900 flex items-center justify-center">
+        <p className="text-gray-800 dark:text-gray-100">Loading...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#ffff]/20 dark:bg-gray-900 font-poppins">
+    <div className="min-h-screen bg-[#ffff]/20 dark:bg-gray-900 font-poppins relative">
       {/* Single Color Background */}
       <div
         className="fixed inset-0 bg-[#ffff]/20 dark:bg-gray-900 z-0"
@@ -400,27 +403,25 @@ export default function LandingPageClient() {
             >
               <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 bg-white/20 dark:bg-gray-800/20 rounded-lg p-4">
                 <Select
-                  value={selectedProgramId.toString()}
-                  onValueChange={(value) =>
-                    setSelectedProgramId(parseInt(value))
-                  }
-                  aria-label="Select a program"
+                  value={selectedCourseId || ""}
+                  onValueChange={(value) => setSelectedCourseId(value)}
+                  aria-label="Select a course"
                 >
                   <SelectTrigger className="bg-transparent border-none text-white dark:text-gray-100 w-full max-w-xs flex items-center justify-between pr-2">
-                    <span>{selectedProgramName}</span>
+                    <span>{selectedCourseName || "Select a Course"}</span>
                     <ChevronDown className="h-6 w-6 text-white dark:text-gray-200" />
                   </SelectTrigger>
                   <SelectContent
                     position="popper"
                     className="w-full max-h-60 overflow-auto bg-white dark:bg-gray-800"
                   >
-                    {programs.map((program) => (
+                    {courses.map((course) => (
                       <SelectItem
-                        key={program.id}
-                        value={program.id.toString()}
+                        key={course.id}
+                        value={course.id}
                         className="text-black dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                       >
-                        {program.name} (₦{program.price.toLocaleString()})
+                        {course.courseName} (₦{course.price.toLocaleString()})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -507,9 +508,9 @@ export default function LandingPageClient() {
             RAD5 Tech Hub Programs
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-            {programs.map((program, index) => (
+            {courses.map((course, index) => (
               <motion.div
-                key={program.id}
+                key={course.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
@@ -518,18 +519,15 @@ export default function LandingPageClient() {
                 <Card className="p-4 sm:p-6 bg-white dark:bg-gray-800">
                   <CardHeader>
                     <CardTitle className="text-lg sm:text-xl">
-                      {program.name}
+                      {course.courseName}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-600 dark:text-gray-300">
-                      Duration: {program.duration}
-                    </p>
-                    <p className="text-gray-600 dark:text-gray-300">
-                      Price: ₦{program.price.toLocaleString()}
+                      Price: ₦{course.price.toLocaleString()}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">
-                      Earn ₦{(program.price * 0.05).toLocaleString()} per
+                      Earn ₦{(course.price * 0.05).toLocaleString()} per
                       referral
                     </p>
                   </CardContent>
@@ -723,6 +721,16 @@ export default function LandingPageClient() {
           </div>
         </section>
       </section>
+
+      <Toaster
+        position="top-right"
+        reverseOrder={false}
+        toastOptions={{
+          className: "bg-gray-800 text-white",
+          duration: 5000,
+          style: { fontSize: "14px" },
+        }}
+      />
 
       <style jsx global>{`
         @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap");

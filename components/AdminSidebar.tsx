@@ -13,12 +13,14 @@ import {
   Moon,
   Sun,
   UserPlus,
+  Book,
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useState } from "react";
+
 interface AdminSidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
@@ -62,6 +64,16 @@ export default function AdminSidebar({
       name: "Withdrawals",
       href: "/admin/withdrawals",
       icon: <CreditCard className="h-5 w-5" />,
+    },
+    {
+      name: "Create Course",
+      href: "/admin/create-course",
+      icon: <Book className="h-5 w-5" />,
+    },
+    {
+      name: "Manage Courses",
+      href: "/admin/manage-courses",
+      icon: <Book className="h-5 w-5" />,
     },
   ];
 

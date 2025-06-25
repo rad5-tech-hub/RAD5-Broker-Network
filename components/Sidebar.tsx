@@ -10,24 +10,27 @@ import { FaWhatsapp } from "react-icons/fa";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
 interface SidebarProps {
   isOpen: boolean;
   toggleSidebar: () => void;
+  profileImage?: string; // Base profile image from dashboard
+  imagePreview?: string | null | undefined; // Preview for uploaded images, allowing null or undefined
+  agentName?: string; // Agent's full name
 }
 
-export default function Sidebar({ isOpen, toggleSidebar }: SidebarProps) {
+export default function Sidebar({
+  isOpen,
+  toggleSidebar,
+  profileImage = "/default-avatar.png",
+  imagePreview,
+  agentName = "Agent",
+}: SidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { theme, setTheme } = useTheme();
-  const profileImage =
-    typeof window !== "undefined"
-      ? localStorage.getItem("userProfileImage") || "/default-avatar.png"
-      : "/default-avatar.png";
-  const agentName =
-    typeof window !== "undefined"
-      ? localStorage.getItem("userFullName") || "Agent"
-      : "Agent";
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   const navItems = [
     {
@@ -69,6 +72,19 @@ ${agentName}`;
     window.open(whatsappUrl, "_blank");
   };
 
+  // Handle image load error
+  const handleImageError = () => {
+    console.error(
+      "Failed to load profile image:",
+      imagePreview || profileImage
+    );
+    setImageLoadError(true);
+  };
+
+  useEffect(() => {
+    setImageLoadError(false); // Reset error state when image changes
+  }, [imagePreview, profileImage]);
+
   return (
     <>
       <aside
@@ -78,15 +94,25 @@ ${agentName}`;
       >
         <div className="flex flex-col items-center p-4">
           <Image src="/rad5hub.png" alt="RAD5_Logo" width={100} height={100} />
-          <Link
-            href="/agent-dashboard/profile"
-            className="mt-3 border-b dark:border-gray-700 w-full flex justify-center pb-4"
-          >
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={profileImage} alt="Profile" />
-              <AvatarFallback>UN</AvatarFallback>
-            </Avatar>
-          </Link>
+
+          <Avatar className="h-12 w-12 mt-2">
+            {!imageLoadError ? (
+              <AvatarImage
+                src={imagePreview || profileImage}
+                alt={`${agentName}'s profile`}
+                onError={handleImageError}
+              />
+            ) : null}
+            <AvatarFallback>
+              {agentName
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+
           <nav className="w-full mt-5">
             <ul className="space-y-2">
               {navItems.map((item) => (

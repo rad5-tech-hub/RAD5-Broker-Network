@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, FormEvent, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { toast, Toaster } from "react-hot-toast";
 import {
@@ -63,24 +63,25 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [phoneErrors, setPhoneErrors] = useState<string[]>([]);
   const [emailErrors, setEmailErrors] = useState<string[]>([]);
-  const [showInfoModal, setShowInfoModal] = useState(true); // Always show modal on load
+  const [showInfoModal, setShowInfoModal] = useState(true);
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
-  const validateEmail = (email: string) => {
+  const validateEmail = useCallback((email: string) => {
     const errors: string[] = [];
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.push("Please enter a valid email address.");
     }
     return errors;
-  };
+  }, []);
 
-  const validatePhoneNumber = (phone: string) => {
+  const validatePhoneNumber = useCallback((phone: string) => {
     const cleanedPhone = phone.replace(/\D/g, "");
     const errors: string[] = [];
     if (!/^\d{11}$/.test(cleanedPhone)) {
       errors.push("Phone number must be 11 digits (e.g., 08123456789).");
     }
     return errors;
-  };
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -139,6 +140,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setFormSubmitted(true);
+
     if (!validateForm()) return;
 
     setLoading(true);
@@ -204,12 +207,19 @@ export default function RegisterPage() {
     }
   };
 
+  const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
+      e.preventDefault();
+    }
+  };
+
   return (
     <div className="w-screen min-h-screen flex items-center justify-center bg-blue-50 dark:bg-gray-900 relative">
       <Toaster position="top-right" />
 
-      {/* Success Modal (unchanged) */}
-      {loading === false &&
+      {/* Success Modal */}
+      {formSubmitted &&
+        !loading &&
         formData.fullName &&
         formData.email &&
         formData.phoneNumber &&
@@ -220,7 +230,7 @@ export default function RegisterPage() {
                 Congratulations!
               </h2>
               <p className="text-gray-700 dark:text-gray-300">
-                You’ve successfully registered with RAD5 Brokers Network! Expect
+                You've successfully registered with RAD5 Brokers Network! Expect
                 updates regarding your journey via your email (
                 <strong>{formData.email}</strong>) or phone (
                 <strong>{formData.phoneNumber}</strong>). Feel free to visit us
@@ -230,7 +240,7 @@ export default function RegisterPage() {
               <p className="text-gray-600 dark:text-gray-400">
                 Explore more at{" "}
                 <a
-                  href="https://rad5.com.ng/"
+                  href="https://academy.rad5.com.ng/?_gl=1%2A1r9yuud%2A_ga%2AMTU2MzcyMTYyMi4xNzIxNjg0MjY3%2A_ga_11EDX3FDFK%2AczE3NTA0MzI5NDUkbzE5JGcxJHQxNzUwNDMyOTg1JGoyMCRsMCRoMA..%2A_gcl_au%2AMTY3Njk3NjczLjE3NDM0MTYyOTg."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 dark:text-blue-400 hover:underline"
@@ -252,10 +262,10 @@ export default function RegisterPage() {
           </div>
         )}
 
-      {/* Info Modal - Shown every time */}
+      {/* Info Modal */}
       {showInfoModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 h-screen">
-          <div className="w-full max-w-4xl bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-2xl rounded-xl h-[90vh] overflow-auto p-6 ">
+          <div className="w-[95%] max-w-4xl mx-auto bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-2xl rounded-xl h-[90vh] overflow-auto lg:p-6 p-2">
             <div className="relative">
               <Image
                 src="/rad5hub.png"
@@ -264,16 +274,16 @@ export default function RegisterPage() {
                 height={150}
                 className="mx-auto"
               />
-              <CardHeader className="pt-16 text-center">
-                <CardTitle className="text-4xl font-bold text-gray-800 dark:text-gray-100">
+              <CardHeader className="pt-4 text-center">
+                <CardTitle className="lg:text-4xl text-2xl font-bold text-gray-800 dark:text-gray-100">
                   Welcome to RAD5 Tech Hub Programs
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-6 sm:p-8 space-y-6">
+              <CardContent className="space-y-6">
                 <p className="text-lg text-gray-700 dark:text-gray-300 text-center leading-relaxed">
                   RAD5 Tech Hub offers cutting-edge tech programs designed to
-                  empower you with skills in today’s digital world. Whether
-                  you’re interested in <strong>Frontend Web Development</strong>
+                  empower you with skills in today's digital world. Whether
+                  you're interested in <strong>Frontend Web Development</strong>
                   , <strong>Data Analytics</strong>,{" "}
                   <strong>UI/UX Design</strong>,{" "}
                   <strong>Digital Marketing</strong>,{" "}
@@ -305,18 +315,6 @@ export default function RegisterPage() {
                     social platforms.
                   </li>
                 </ul>
-                <p className="text-center">
-                  For more details or to explore our full range of programs,
-                  visit our official website:{" "}
-                  <a
-                    href="https://rad5.com.ng/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 dark:text-blue-400 hover:underline"
-                  >
-                    https://rad5.com.ng/
-                  </a>
-                </p>
                 <div className="text-center">
                   <Button
                     onClick={() => setShowInfoModal(false)}
@@ -331,11 +329,12 @@ export default function RegisterPage() {
         </div>
       )}
 
-      {/* Registration Form - Hidden until modal is closed */}
+      {/* Registration Form */}
       {!showInfoModal && (
         <form
           className="container px-4 sm:px-6 lg:px-8 mx-auto h-fit"
           onSubmit={handleSubmit}
+          onKeyDown={handleFormKeyDown}
         >
           <div className="grid lg:grid-cols-2 grid-cols-1 min-h-[600px] rounded-lg overflow-hidden shadow-xl">
             <div className="hidden lg:block bg-[url(/signupbg03.jpg)] bg-cover bg-center bg-no-repeat relative">
@@ -493,7 +492,13 @@ export default function RegisterPage() {
                   type="submit"
                   className="w-full bg-gray-400 text-gray-900 hover:bg-gray-300 dark:bg-gray-400 dark:hover:bg-gray-300 transform hover:scale-103 transition-transform mt-6"
                   disabled={
-                    loading || phoneErrors.length > 0 || emailErrors.length > 0
+                    loading ||
+                    phoneErrors.length > 0 ||
+                    emailErrors.length > 0 ||
+                    !formData.fullName ||
+                    !formData.email ||
+                    !formData.phoneNumber ||
+                    !formData.track
                   }
                   aria-label="Register"
                 >
@@ -521,15 +526,6 @@ export default function RegisterPage() {
                   ) : null}
                   {loading ? "Registering..." : "Register"}
                 </Button>
-                <div className="text-center text-sm text-gray-600 dark:text-gray-300">
-                  Already have an account?{" "}
-                  <Link
-                    href="/signin"
-                    className="underline text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                  >
-                    Sign In
-                  </Link>
-                </div>
               </CardFooter>
             </div>
           </div>

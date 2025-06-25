@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Toaster } from "react-hot-toast";
+
 interface Agent {
   id: string;
   fullName: string;
@@ -98,10 +99,9 @@ export default function WithdrawalsPage() {
   const [agentUsers, setAgentUsers] = useState<User[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [fundData, setFundData] = useState<{
-    userId: string;
-    amountPaid: number;
-    commissionRate: number;
-  }>({ userId: "", amountPaid: 0, commissionRate: 0.1 });
+    agentId: string;
+    amount: number;
+  }>({ agentId: "", amount: 0 });
   const itemsPerPage = 5;
   const router = useRouter();
 
@@ -199,14 +199,17 @@ export default function WithdrawalsPage() {
       const apiBaseUrl =
         process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
         "https://rbn.bookbank.com.ng/api/v1";
-      const response = await fetch(`${apiBaseUrl}/wallet/mark-paid`, {
+      const response = await fetch(`${apiBaseUrl}/withdrawal/pay-agent`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(fundData),
+        body: JSON.stringify({
+          agentId: fundData.agentId || selectedAgentId || "",
+          amount: fundData.amount,
+        }),
       });
 
       const result = await response.json();
@@ -223,7 +226,7 @@ export default function WithdrawalsPage() {
       toast.success(
         `${
           result.message
-        }. Commission: ₦${result.commission.toLocaleString()}. New balance: ₦${result.walletBalance.toLocaleString()}`,
+        }. New balance: ₦${result.walletBalance.toLocaleString()}`,
         {
           id: "fund-agent-success",
           duration: 5000,
@@ -231,9 +234,33 @@ export default function WithdrawalsPage() {
         }
       );
 
-      setFundData({ userId: "", amountPaid: 0, commissionRate: 0.1 });
+      setFundData({ agentId: "", amount: 0 });
       setAgentUsers([]);
       setIsFundDialogOpen(false);
+      // Refresh withdrawals to reflect updated status
+      const fetchWithdrawals = async () => {
+        const token = localStorage.getItem("rbn_admin_token");
+        if (!token) throw new Error("No authentication token found");
+
+        const apiBaseUrl =
+          process.env.NEXT_PUBLIC_RBN_API_BASE_URL ||
+          "https://rbn.bookbank.com.ng/api/v1";
+        const response = await fetch(`${apiBaseUrl}/withdrawal/withdrawals`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        setWithdrawals(result.data || []);
+      };
+      await fetchWithdrawals();
     } catch (err: any) {
       console.error("Funding error:", err);
       toast.error(err.message || "Failed to fund agent.", {
@@ -300,9 +327,8 @@ export default function WithdrawalsPage() {
       const approvedWithdrawal = withdrawals.find((w) => w.id === withdrawalId);
       if (approvedWithdrawal) {
         setFundData({
-          userId: "",
-          amountPaid: approvedWithdrawal.amount,
-          commissionRate: 0.1,
+          agentId: approvedWithdrawal.agentId,
+          amount: approvedWithdrawal.amount,
         });
         await fetchUsers(approvedWithdrawal.agentId);
         setIsFundDialogOpen(true);
@@ -380,10 +406,6 @@ export default function WithdrawalsPage() {
         <h1 className="text-2xl md:text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100">
           Withdrawal Requests
         </h1>
-
-        {/* <Button onClick={() => toast.success("Test toast!")} className="mb-4">
-          Test Toast
-        </Button> */}
 
         <Card className="mb-6">
           <CardHeader>
@@ -625,46 +647,35 @@ export default function WithdrawalsPage() {
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Loading users...
                 </p>
-              ) : agentUsers.length > 0 ? (
+              ) : (
                 <>
                   <div className="grid gap-1 sm:gap-2">
-                    <Label htmlFor="userId" className="text-sm">
-                      Select User
-                    </Label>
-                    <Select
-                      onValueChange={(value) =>
-                        setFundData({ ...fundData, userId: value })
-                      }
-                      value={fundData.userId}
-                    >
-                      <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Choose a user" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {agentUsers.map((user) => (
-                          <SelectItem
-                            key={user.id}
-                            value={user.id}
-                            className="text-sm"
-                          >
-                            {user.fullName} ({user.email})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid gap-1 sm:gap-2">
-                    <Label htmlFor="amountPaid" className="text-sm">
-                      Amount Paid (₦)
+                    <Label htmlFor="agentId" className="text-sm">
+                      Agent ID (Optional)
                     </Label>
                     <Input
-                      id="amountPaid"
+                      id="agentId"
+                      value={fundData.agentId}
+                      onChange={(e) =>
+                        setFundData({ ...fundData, agentId: e.target.value })
+                      }
+                      placeholder="Enter Agent ID (optional)"
+                      className="text-sm"
+                      disabled
+                    />
+                  </div>
+                  <div className="grid gap-1 sm:gap-2">
+                    <Label htmlFor="amount" className="text-sm">
+                      Amount (₦)
+                    </Label>
+                    <Input
+                      id="amount"
                       type="number"
-                      value={fundData.amountPaid || ""}
+                      value={fundData.amount || ""}
                       onChange={(e) =>
                         setFundData({
                           ...fundData,
-                          amountPaid: parseFloat(e.target.value) || 0,
+                          amount: parseFloat(e.target.value) || 0,
                         })
                       }
                       placeholder="Enter amount"
@@ -672,47 +683,29 @@ export default function WithdrawalsPage() {
                       className="text-sm"
                     />
                   </div>
-                  <div className="grid gap-1 sm:gap-2">
-                    <Label htmlFor="commissionRate" className="text-sm">
-                      Commission Rate
-                    </Label>
-                    <Input
-                      id="commissionRate"
-                      type="number"
-                      step="0.01"
-                      value={fundData.commissionRate || ""}
-                      onChange={(e) =>
-                        setFundData({
-                          ...fundData,
-                          commissionRate: parseFloat(e.target.value) || 0.1,
-                        })
-                      }
-                      placeholder="e.g., 0.1"
-                      min={0}
-                      max={1}
-                      className="text-sm"
-                    />
-                  </div>
+
                   <div className="flex gap-2">
                     <Button
                       onClick={() => {
                         console.log("Fund Now button clicked");
                         fundAgent();
                       }}
-                      disabled={
-                        isFunding || !fundData.userId || !fundData.amountPaid
-                      }
+                      disabled={isFunding || !fundData.amount}
                       className="w-full text-sm bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       {isFunding ? "Funding..." : "Fund Now"}
                     </Button>
+                    <DialogClose asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full text-sm"
+                        disabled={isFunding}
+                      >
+                        Cancel
+                      </Button>
+                    </DialogClose>
                   </div>
                 </>
-              ) : (
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  No users found for this agent. Please register users to enable
-                  funding.
-                </p>
               )}
             </div>
           </DialogContent>
