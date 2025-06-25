@@ -379,7 +379,7 @@ export default function LandingPageClient() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <motion.h1
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white dark:text-gray-100 mb-6"
+              className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white dark:text-gray-100 mb-2"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2 }}
@@ -387,7 +387,7 @@ export default function LandingPageClient() {
               Earn with RAD5 Brokers Network
             </motion.h1>
             <motion.p
-              className="text-lg sm:text-xl md:text-2xl text-white dark:text-gray-200 mb-8 max-w-2xl mx-auto"
+              className="text-lg sm:text-xl md:text-2xl text-white dark:text-gray-200 mb-4 max-w-2xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
@@ -658,61 +658,9 @@ export default function LandingPageClient() {
       {/* CTA Footer */}
       <section
         id="contact"
-        className="pt-16 dark:bg-gray-900 bg-gray-300 dark:text-white text-black relative z-10 dark:border-t"
+        className=" dark:bg-gray-900 bg-gray-300 dark:text-white text-black relative z-10 dark:border-t"
       >
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Join RBN Today
-          </h2>
-          <p className="text-lg sm:text-xl mb-8 max-w-2xl mx-auto">
-            Become an ambassador, promote RAD5 Tech Hub, and start earning
-            commissions. Subscribe for updates!
-          </p>
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col sm:flex-row max-w-md mx-auto space-y-4 sm:space-y-0 sm:space-x-4"
-          >
-            <Input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-100"
-              aria-label="Email for newsletter"
-            />
-            <Button
-              type="submit"
-              className="bg-gray-800 text-white hover:bg-gray-900 dark:bg-gray-400 dark:text-gray-900 dark:hover:bg-gray-500"
-              aria-label="Subscribe to newsletter"
-            >
-              Subscribe
-            </Button>
-          </form>
-          <div className="mt-8 flex justify-center space-x-6">
-            <Link
-              href="https://twitter.com"
-              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
-              aria-label="Follow us on Twitter"
-            >
-              <RiTwitterXLine className="h-6 w-6" />
-            </Link>
-            <Link
-              href="https://linkedin.com"
-              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
-              aria-label="Follow us on LinkedIn"
-            >
-              <FaLinkedin className="h-6 w-6" />
-            </Link>
-            <Link
-              href="https://github.com"
-              className="dark:text-white text-gray-900 hover:text-gray-300 dark:hover:text-gray-700"
-              aria-label="GitHub"
-            >
-              <FaGithub className="h-6 w-6" />
-            </Link>
-          </div>
-        </div>
-        <section className="mt-8 dark:text-white text-gray-900 border-t p-4">
+        <section className=" dark:text-white text-gray-900 p-6">
           <div className="container text-center">
             © All Copyright 2025 by{" "}
             <Link href="https://rad5.com.ng/" className="underline">
