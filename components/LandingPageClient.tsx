@@ -370,7 +370,7 @@ export default function LandingPageClient() {
           transition={{ duration: 1 }}
         >
           <motion.div
-            className="bg-gradient-to-b from-black/20 to-transparent dark:from-black/30 dark:to-transparent rounded-2xl p-6 sm:p-8 sm:backdrop-blur-xs"
+            className="bg-gradient-to-b from-black/80 to-transparent dark:from-black/90 dark:to-transparent rounded-2xl p-6 sm:p-8 sm:backdrop-blur-xs"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
