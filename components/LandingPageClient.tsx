@@ -3,13 +3,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "next-themes";
@@ -29,9 +27,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { RiTwitterXLine } from "react-icons/ri";
-import { FaLinkedin } from "react-icons/fa";
-import { FaGithub } from "react-icons/fa";
 import CountUp from "react-countup";
 import { useInView } from "react-intersection-observer";
 import { toast } from "react-hot-toast";
@@ -392,8 +387,9 @@ export default function LandingPageClient() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Join as an ambassador, refer students to RAD5 Tech Hub’s tech
-              programs, and earn up to 5% commission instantly.
+              It's real, Join as an ambassador, refer students to RAD5 Tech
+              Hub’s tech programs, and earn up to 5% commission instantly
+              without stress.
             </motion.p>
             <motion.div
               className="mb-8 max-w-md mx-auto"
