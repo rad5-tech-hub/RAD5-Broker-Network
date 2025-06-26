@@ -14,6 +14,7 @@ export default function CreateCoursePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [courseName, setCourseName] = useState("");
   const [price, setPrice] = useState("");
+  const [courseDuration, setCourseDuration] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
@@ -42,6 +43,7 @@ export default function CreateCoursePage() {
         body: JSON.stringify({
           courseName,
           price: parseFloat(price),
+          courseDuration,
         }),
       });
 
@@ -54,6 +56,7 @@ export default function CreateCoursePage() {
       toast.success(result.message || "Course created successfully!");
       setCourseName("");
       setPrice("");
+      setCourseDuration("");
     } catch (err: any) {
       console.error("Error creating course:", err);
       toast.error(err.message || "Failed to create course.");
@@ -128,6 +131,20 @@ export default function CreateCoursePage() {
                   placeholder="Enter price"
                   min="0"
                   step="0.01"
+                  required
+                  className="text-sm"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="courseDuration" className="text-sm">
+                  Course Duration
+                </Label>
+                <Input
+                  id="courseDuration"
+                  type="text"
+                  value={courseDuration}
+                  onChange={(e) => setCourseDuration(e.target.value)}
+                  placeholder="Enter course duration (e.g., 6 months)"
                   required
                   className="text-sm"
                 />

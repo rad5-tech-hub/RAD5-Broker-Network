@@ -29,6 +29,7 @@ interface Course {
   id: string;
   courseName: string;
   price: number;
+  courseDuration: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -43,6 +44,7 @@ export default function ManageCoursesPage() {
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editedName, setEditedName] = useState("");
   const [editedPrice, setEditedPrice] = useState("");
+  const [editedCourseDuration, setEditedCourseDuration] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -91,6 +93,7 @@ export default function ManageCoursesPage() {
     setEditingCourse(course);
     setEditedName(course.courseName);
     setEditedPrice(course.price.toString());
+    setEditedCourseDuration(course.courseDuration);
     setEditDialogOpen(true);
   };
 
@@ -121,6 +124,7 @@ export default function ManageCoursesPage() {
           body: JSON.stringify({
             courseName: editedName,
             price: parseFloat(editedPrice),
+            courseDuration: editedCourseDuration,
           }),
         }
       );
@@ -134,7 +138,12 @@ export default function ManageCoursesPage() {
       setCourses(
         courses.map((c) =>
           c.id === editingCourse.id
-            ? { ...c, courseName: editedName, price: parseFloat(editedPrice) }
+            ? {
+                ...c,
+                courseName: editedName,
+                price: parseFloat(editedPrice),
+                courseDuration: editedCourseDuration,
+              }
             : c
         )
       );
@@ -216,6 +225,7 @@ export default function ManageCoursesPage() {
                   <TableRow>
                     <TableHead>Course Name</TableHead>
                     <TableHead>Price (₦)</TableHead>
+                    <TableHead>Duration</TableHead>
                     <TableHead>Created At</TableHead>
                     <TableHead>Action</TableHead>
                   </TableRow>
@@ -225,6 +235,7 @@ export default function ManageCoursesPage() {
                     <TableRow key={course.id}>
                       <TableCell>{course.courseName}</TableCell>
                       <TableCell>{course.price.toLocaleString()}</TableCell>
+                      <TableCell>{course.courseDuration}</TableCell>
                       <TableCell>
                         {new Date(course.createdAt).toLocaleDateString()}
                       </TableCell>
@@ -283,6 +294,19 @@ export default function ManageCoursesPage() {
                     onChange={(e) => setEditedPrice(e.target.value)}
                     min="0"
                     step="0.01"
+                    required
+                    className="text-sm"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="editCourseDuration" className="text-sm">
+                    Course Duration
+                  </Label>
+                  <Input
+                    id="editCourseDuration"
+                    type="text"
+                    value={editedCourseDuration}
+                    onChange={(e) => setEditedCourseDuration(e.target.value)}
                     required
                     className="text-sm"
                   />
