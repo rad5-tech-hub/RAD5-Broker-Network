@@ -58,7 +58,7 @@ const testimonials: Testimonial[] = [
     name: "Fatima B.",
     role: "Digital Marketer",
     quote:
-      "The referral system is seamless. I love promoting RAD5’s programs and seeing my commissions grow.",
+      "The referral system is seamless and straight to the point. I love promoting RAD5’s programs and seeing my commissions grow.",
   },
   {
     name: "Emeka N.",
