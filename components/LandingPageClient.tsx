@@ -422,7 +422,6 @@ export default function LandingPageClient() {
                 >
                   <SelectTrigger className="bg-transparent border-none text-white dark:text-gray-100 w-full max-w-xs flex items-center justify-between pr-2">
                     <span>{selectedCourseName || "Select a Course"}</span>
-                    <ChevronDown className="h-6 w-6 text-white dark:text-gray-200" />
                   </SelectTrigger>
                   <SelectContent
                     position="popper"
