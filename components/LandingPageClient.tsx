@@ -42,6 +42,7 @@ interface Course {
   id: string;
   courseName: string;
   price: number;
+  courseDuration: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -73,6 +74,21 @@ const stats: { label: string; value: number }[] = [
   { label: "Referrals", value: 20000 },
   { label: "Commissions Paid (₦)", value: 50000000 },
 ];
+
+// Ultra-modern loader component
+const ModernLoader = () => (
+  <div
+    className="flex items-center justify-center"
+    role="status"
+    aria-label="Loading courses"
+  >
+    <div className="relative w-16 h-16">
+      <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="absolute inset-2 border-4 border-blue-400 border-t-transparent rounded-full animate-spin-slow"></div>
+      <div className="absolute inset-4 border-4 border-blue-200 border-t-transparent rounded-full animate-spin-fast"></div>
+    </div>
+  </div>
+);
 
 export default function LandingPageClient() {
   const { theme, setTheme } = useTheme();
@@ -181,7 +197,8 @@ export default function LandingPageClient() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#ffff]/20 dark:bg-gray-900 flex items-center justify-center">
-        <p className="text-gray-800 dark:text-gray-100">Loading...</p>
+        <ModernLoader />
+        <span className="sr-only">Loading courses...</span>
       </div>
     );
   }
@@ -523,6 +540,9 @@ export default function LandingPageClient() {
                       Price: ₦{course.price.toLocaleString()}
                     </p>
                     <p className="text-gray-600 dark:text-gray-300 mt-2">
+                      Duration: {course.courseDuration}
+                    </p>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">
                       Earn ₦{(course.price * 0.05).toLocaleString()} per
                       referral
                     </p>
@@ -654,9 +674,9 @@ export default function LandingPageClient() {
       {/* CTA Footer */}
       <section
         id="contact"
-        className=" dark:bg-gray-900 bg-gray-300 dark:text-white text-black relative z-10 dark:border-t"
+        className="dark:bg-gray-900 bg-gray-300 dark:text-white text-black relative z-10 dark:border-t"
       >
-        <section className=" dark:text-white text-gray-900 p-6">
+        <section className="dark:text-white text-gray-900 p-6">
           <div className="container text-center">
             © All Copyright 2025 by{" "}
             <Link href="https://rad5.com.ng/" className="underline">
@@ -684,6 +704,38 @@ export default function LandingPageClient() {
         .bg-circuit-pattern {
           background-image: url("data:image/svg+xml;utf8,%3Csvg%20width=%22100%22%20height=%22100%22%20viewBox=%220%200%20100%20100%22%20fill=%22none%22%20stroke=%22%23000000%22%20stroke-width=%221%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22%3E%3Cpath%20d=%22M10%2010h80M10%2050h80M10%2090h80M50%2010v80M10%2030h20M70%2030h20M10%2070h20M70%2070h20%22/%3E%3C/svg%3E");
           background-repeat: repeat;
+        }
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+          border: 0;
+        }
+        @keyframes spin-slow {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(-360deg);
+          }
+        }
+        @keyframes spin-fast {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(720deg);
+          }
+        }
+        .animate-spin-slow {
+          animation: spin-slow 2s linear infinite;
+        }
+        .animate-spin-fast {
+          animation: spin-fast 1s linear infinite;
         }
       `}</style>
     </div>
